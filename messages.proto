@@ -1,0 +1,123 @@
+syntax = "proto3";
+package connection;
+
+option java_multiple_files = true;
+option java_package = "apps.connection.packets.messages";
+option java_outer_classname = "PacketMessages";
+
+message VectorM{
+  repeated sint32 coordinate = 1;
+}
+message EdgeM{
+  oneof edge{
+    BodyEdgeM bep = 1;
+    ControlEdgeM cep = 2;
+    FixedEdgeM fep = 3;
+    WorldEdgeM wei = 4;
+  }
+  message BodyEdgeM{
+    int32 bi = 1;
+    int32 i1 = 2;
+    int32 i2 = 3;
+  }
+  message ControlEdgeM{
+    int32 i1 = 1;
+    int32 i2 = 2;
+  }
+  message FixedEdgeM{
+    int32 i1 = 1;
+    int32 i2 = 2;
+    sint32 d = 3;
+  }
+  message WorldEdgeM{
+    int32 i1 = 1;
+    int32 i2 = 2;
+    int32 bi1 = 3;
+    int32 bi2 = 4;
+    sint32 d = 5;
+  }
+}
+message ClientMessage{
+  string name = 1;
+  message InputM{
+    VectorM mousepos = 1;
+    bool teleport = 2;
+    bool create = 3;
+    bool webFling = 4;
+    bool detachWeb = 5;
+  }
+  InputM input = 2;
+}
+message ServerMessage{
+  bool playing = 1;
+  WorldM world = 2;
+  LobbyM lobby = 3;
+  repeated AnimationM animation = 4;
+  repeated Sound sound = 5;
+  message WorldM{
+    repeated BodyM body = 1;
+    message BodyM{
+      repeated EdgeM edge = 1;
+      message PointM{
+        VectorM pos = 1;
+        int32 mass = 2;
+      }
+      repeated PointM point = 2;
+      repeated int32 bound = 3;
+      oneof subtypeData{
+        ShellM shell = 4;
+        TurtleM turtle = 5;
+        WebM web = 6;
+      }
+      message ShellM{
+        int32 parent = 1;
+        bool leaveParentFlag = 2;
+        repeated EdgeM.WorldEdgeM straps = 3; //always WorldEdgeImage
+      }
+      message TurtleM{
+        map<int32, int32> spinnerets = 1;
+        int32 shell = 2;
+        int32 owner = 3;
+      }
+      message WebM{
+        optional EdgeM.BodyEdgeM target = 1;
+        int32 control = 2;
+        optional EdgeM.WorldEdgeM sourceEdge = 3;
+        optional EdgeM.WorldEdgeM targetEdge1 = 4;
+        optional EdgeM.WorldEdgeM targetEdge2 = 5;
+        bool isGrowing = 6;
+      }
+    }
+  }
+  message LobbyM{
+    repeated string playerName = 1;
+    repeated int32 score = 2;
+  }
+  message AnimationM{
+    oneof animation{
+      CollisionBurstM collisionBurstM = 1;
+      ScreenShakeM screenShakeM = 2;
+      ShellSnapFlashM shellSnapFlashM = 3;
+    }
+    message CollisionBurstM{
+      VectorM pos = 1;
+      int32 intensity = 2;
+      Color color = 3;
+      message Color{
+        int32 R = 1;
+        int32 G = 2;
+        int32 B = 3;
+      }
+    }
+    message ScreenShakeM{
+      int32 intensity = 1;
+    }
+    message ShellSnapFlashM{}
+  }
+  enum Sound{
+    death = 0;
+    button = 1;
+    webThrow = 2;
+    collision = 3;
+  }
+}
