@@ -3,6 +3,7 @@ package apps.input;
 import apps.Handler;
 import apps.ProgramState;
 import apps.ui.Menu;
+import apps.ui.rectangles.Button;
 import apps.ui.rectangles.Textbox;
 import apps.util.DevConfig;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -18,22 +19,34 @@ import static java.awt.event.KeyEvent.*;
 
 public class InputControl extends MouseAdapter implements KeyListener {
     //region Events
-    private static final Map<Integer, KeyEvent> keyPressEvents = new HashMap<>();
-    private static final Map<Integer, KeyEvent> keyReleaseEvents = new HashMap<>();
-    private static final Map<Mousebutton, MouseEvent> mousePressEvents = new HashMap<>();
-    private static final Map<Mousebutton, MouseEvent> mouseReleaseEvents = new HashMap<>();
     private static int scroll = 0;
 
     //endregion
     //region MouseListener methods
     @Override
     public void mousePressed(MouseEvent e) {
-        mousePressEvents.put(getButton(e.getButton()), e);
+        Mousebutton button = getButton(e.getButton());
+        if (button == Left) {
+            Menu.press(mousepos);
+        }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        mouseReleaseEvents.put(getButton(e.getButton()), e);
+        Mousebutton button = getButton(e.getButton());
+        if (Menu.getFocused() != null) {
+            if (Menu.getFocused() instanceof Textbox textbox) {
+                if (button == Left) {
+                    if (Menu.getPressed() == textbox) {
+                        return;
+                    }
+                    Menu.unfocus();
+                }
+            }
+        }
+        if (button == Left) {
+            Menu.release();
+        }
     }
 
     @Override
@@ -57,12 +70,44 @@ public class InputControl extends MouseAdapter implements KeyListener {
     //region KeyListener methods
     @Override
     public void keyPressed(@NotNull KeyEvent e) {
-        keyPressEvents.put(e.getKeyCode(), e);
+        int key = e.getKeyCode();
+        if (key == VK_SHIFT) {
+            Shift = true;
+            return;
+        }
+        if (Menu.getFocused() != null) {
+            //region textbox
+            if (Menu.getFocused() instanceof Textbox textbox) {
+                if (key == VK_ESCAPE) {
+                    Menu.unfocus();
+                } else if (key == VK_ENTER) {
+                    textbox.useValue();
+                    Menu.unfocus();
+                    text = "";
+                } else if (key == VK_BACK_SPACE) {
+                    if (!textbox.text.isEmpty()) {
+                        textbox.setText(textbox.text.substring(0, textbox.text.length() - 1));
+                    }
+                } else if (textbox.text.length() < DevConfig.maxNameLength) {
+                    textbox.setText(textbox.text + getText(e));
+                    if (textbox.text.length() > DevConfig.maxNameLength) {
+                        textbox.setText(textbox.text.substring(0, DevConfig.maxNameLength - 1));
+                    }
+                }
+                Handler.repaint(textbox.x,textbox.y,textbox.width, textbox.height);
+            }
+            //endregion
+
+        }
     }
 
     @Override
     public void keyReleased(@NotNull KeyEvent e) {
-        keyReleaseEvents.put(e.getKeyCode(), e);
+        int key = e.getKeyCode();
+        if (key == VK_SHIFT) {
+            Shift = false;
+            return;
+        }
     }
 
     //region (not used)
@@ -79,143 +124,18 @@ public class InputControl extends MouseAdapter implements KeyListener {
     }
 
     public static final ArrayRealVector mousepos = new ArrayRealVector(new Double[]{0.0, 0.0});
-
-    static {
-        for (int i = 0; i <= 0xE3; i++) {
-            keyPressEvents.put(i, null);
-            keyReleaseEvents.put(i, null);
-        }
-    }
-
+    static boolean Shift = false;
     static String text = "";
 
-    public static void handleInput() {
-        InputInfo input = Handler.getInput();
-        ProgramState state = Handler.getState();
-        //region Always
-        if (Menu.getFocused() != null) {
-            if (Menu.getFocused() instanceof Textbox textbox) {
-                //region unfocus if pressed escape or clicked LMB outside of the textbox
-                if (pressed(VK_ESCAPE)) {
-                    Menu.unfocus();
-                    dispatchText();
-                    dispatch(Left);
-                    dispatch(VK_ESCAPE);
-                } else if (released(Left) && Menu.getPressed() != textbox) {
-                    Menu.unfocus();
-                    dispatchText();
-                    dispatch(Left);
-                }
-                //endregion
-                //region use value and unfocus if pressed enter
-                else if (pressed(VK_ENTER)) {
-                    textbox.useValue();
-                    Menu.unfocus();
-                    dispatchText();
-                }
-                //endregion
-                //region otherwise append and remove text according to the pressed keys
-                else if (pressed(VK_BACK_SPACE)) {
-                    if (!textbox.text.isEmpty()) {
-                        textbox.setText(textbox.text.substring(0, textbox.text.length() - 1));
-                    }
-                    unpress(VK_BACK_SPACE);
-                } else if (textbox.text.length() < DevConfig.maxNameLength) {
-                    textbox.setText(textbox.text + getText());
-                    if (textbox.text.length() > DevConfig.maxNameLength) {
-                        textbox.setText(textbox.text.substring(0, DevConfig.maxNameLength - 1));
-                    }
-                }
-                //endregion
-            }
-        }
-        if (released(VK_ESCAPE)) {
-            input.escape = true;
-            dispatch(VK_ESCAPE);
-        }
-        /*
-        if (pressed(VK_SPACE)) {
-            Handler.debug = true;
-            unpress(KeyEvent.VK_SPACE);
-        }
-        if (released(VK_SPACE)) {
-            Handler.debug = false;
-            unrelease(KeyEvent.VK_SPACE);
-        }*/
-        //endregion
-        //region Menu
-        if (pressed(Left)) {
-            if (Menu.press(mousepos)) {
-                unpress(Left);
-            }
-        }
-        if (released(Left)) {
-            if (Menu.release()) {
-                dispatch(Left);
-            }
-        }
-        //endregion
-        //region Play
-        /*
-        if (state == playClient || state == playServer) {
-            if (pressed(VK_SPACE)) {
-                input.drag();
-            }
-            if (released(VK_SPACE)) {
-                dispatch(VK_SPACE);
-            }
-            if (pressed(Left)) {
-                input.webFling();
-                dispatch(Left);
-            }
-            if (pressed(Right)) {
-                input.detachWeb();
-                dispatch(Right);
-            }
-            if (pressed(VK_C)) {
-                input.create();
-                dispatch(KeyEvent.VK_C);
-            }
-            if (pressed(VK_S)) {
-                Menu.showScores();
-                Menu.refreshScores();
-            } else {
-                Menu.hideScores();
-            }
-            if (released(VK_S)) {
-                dispatch(VK_S);
-            }
-        } else {
-            dispatch(Left);
-        }
-        */
-        //endregion
-    }
-
-
-    private static void dispatchText() {
-        for (int key = 0x2C; key < 0x69 + 1; key++) {
-            dispatch(key);
-        }
-        dispatch(VK_ENTER);
-        dispatch(VK_SHIFT);
-        text = "";
-    }
-
     @NotNull
-    private static String getText() {
+    private static String getText(@NotNull KeyEvent e) {
         StringBuilder textBuilder = new StringBuilder();
-        for (int key = 0x2C; key < 0x69 + 1; key++) {
-            if (pressed(key)) {
-                textBuilder.append(keyPressEvents.get(key).getKeyChar());
-                unpress(key);
-            }
-        }
-        if (released(VK_SHIFT)) {
-            dispatch(VK_SHIFT);
+        int key = e.getKeyCode();
+        if (key >= 0x2C && key <= 0x69) {
+            textBuilder.append(e.getKeyChar());
         }
         String text = textBuilder.toString();
-        if (!pressed(VK_SHIFT)) {
+        if (Shift) {
             text = text.toLowerCase();
         }
         text = text.replaceAll("\\p{C}", "");
@@ -229,48 +149,4 @@ public class InputControl extends MouseAdapter implements KeyListener {
             return Right;
         }
     }
-
-    //region Private key/mousebutton getters and setters
-    private static boolean pressed(int key) {
-        return keyPressEvents.get(key) != null;
-    }
-
-    private static boolean released(int key) {
-        return keyReleaseEvents.get(key) != null;
-    }
-
-    private static void unrelease(int key) {
-        keyReleaseEvents.put(key, null);
-    }
-
-    private static void unpress(int key) {
-        keyPressEvents.put(key, null);
-    }
-
-    private static void dispatch(int key) {
-        keyReleaseEvents.put(key, null);
-        keyPressEvents.put(key, null);
-    }
-
-    private static boolean pressed(Mousebutton button) {
-        return mousePressEvents.get(button) != null;
-    }
-
-    private static boolean released(Mousebutton button) {
-        return mouseReleaseEvents.get(button) != null;
-    }
-
-    private static void unrelease(Mousebutton button) {
-        mouseReleaseEvents.put(button, null);
-    }
-
-    private static void unpress(Mousebutton button) {
-        mousePressEvents.put(button, null);
-    }
-
-    private static void dispatch(Mousebutton button) {
-        mouseReleaseEvents.put(button, null);
-        mousePressEvents.put(button, null);
-    }
-    //endregion
 }

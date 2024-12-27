@@ -1,6 +1,8 @@
 package apps.ui.rectangles;
 
 
+import apps.Handler;
+import apps.ui.Menu;
 import apps.util.DevConfig;
 import com.fazecast.jSerialComm.SerialPort;
 
@@ -41,10 +43,13 @@ public class PlotContainer extends RectElement {
         }
         portPlotGroups.clear();
         portPlotGroups.add(new PortPlotGroup(x, y, width, height, port)); // make them stack later
+        Menu.update();
+        Handler.repaint(x,y,width,height);
     }
 
     public void removePlot(PortPlotGroup plot) {
         portPlotGroups.remove(plot);
+        Handler.repaint(x,y,width,height);
     }
 
     public ArrayList<PortPlotGroup> getPortPlotGroups() {
@@ -96,5 +101,6 @@ public class PlotContainer extends RectElement {
             plot.arrange();
         }
         //endregion
+        Handler.repaint(x,y,width,height);
     }
 }

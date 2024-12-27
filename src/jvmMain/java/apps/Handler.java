@@ -3,100 +3,50 @@ package apps;
 import apps.input.InputControl;
 import apps.input.InputInfo;
 import apps.output.AppWindow;
-import apps.output.Renderer;
 import apps.ui.Menu;
 import apps.content.Content;
+import apps.util.Logging;
 import com.fazecast.jSerialComm.*;
 
-import java.awt.image.BufferStrategy;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.logging.Logger;
 
 
 public class Handler {
     private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    //region Jobs
-    private static final HashMap<Job, Runnable> job = new HashMap<>();
-
-    private enum Job {
-        handleInput,
-        updateMenu,
-        updateContent,
-        clearContent,
-    }
-
-    private static final ArrayList<Job> toRemove = new ArrayList<>();
-    private static final ArrayList<Job> toAdd = new ArrayList<>();
-
-    private static final ArrayList<Runnable> jobs = new ArrayList<>();
-    //endregion
     static final AppWindow window = new AppWindow();
     private static ProgramState state;
     static final InputInfo input = new InputInfo();
+    private final static Thread onShutdown = new Thread(()->{
 
-    static {
+    });
+
+    public static void run() {
+        Runtime.getRuntime().addShutdownHook(onShutdown);
+        try {
+            Logging.setup();
+        } catch (IOException | URISyntaxException e) {
+            throw new RuntimeException("Failure creating the log files: " + e.getMessage());
+        }
         PortTester.start();
         state = ProgramState.main;
         //region Define job dictionary
-        job.clear();
-        job.put(Job.updateContent, Content::update);
-        job.put(Job.handleInput, InputControl::handleInput);
-        job.put(Job.updateMenu, Menu::update);
-        job.put(Job.clearContent, () -> {
-            Content.clear();
-            Content.update();
-            removeJob(Job.clearContent);
-        });
         //endregion
         //region Set starting state
-        addJob(Job.handleInput);
-        addJob(Job.updateMenu);
-        Menu.refreshMenuState();
+        Menu.start();
         //endregion
     }
 
-    public static void out() {
-        BufferStrategy strategy = window.getCanvas();
-        do {
-            do {
-                Renderer.drawImage(strategy.getDrawGraphics());
-            } while (strategy.contentsRestored());
-            strategy.show();
-        } while (strategy.contentsLost());
-    }
-
-    public static void update() {
-        //region remove and add jobs
-        for (Job added : toAdd) {
-            jobs.add(job.get(added));
-        }
-        toAdd.clear();
-        for (Job removed : toRemove) {
-            jobs.remove(job.get(removed));
-        }
-        toRemove.clear();
-        //endregion
-        //region get em done
-        for (Runnable job : jobs) {
-            job.run();
-        }
-        //endregion
+    public static void repaint(int x, int y, int width, int height) {
+        window.repaintCanvas(x, y, width, height);
     }
 
     public static SerialPort[] getPorts() {
         return SerialPort.getCommPorts();
     }
 
-    //region Job Methods - merge some of them!
-    private static void addJob(Job job) {
-        toAdd.add(job);
-    }
-
-    private static void removeJob(Job job) {
-        toRemove.add(job);
-    }
-
-    //endregion
     //region State traversal
     private static void setState(ProgramState state) {
         Handler.state = state;

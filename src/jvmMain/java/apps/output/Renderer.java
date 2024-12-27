@@ -1,7 +1,6 @@
 package apps.output;
 
 
-import apps.Handler;
 import apps.output.animations.Animation;
 import apps.ui.IElement;
 import apps.ui.Menu;
@@ -34,9 +33,9 @@ public class Renderer {
         }
     }
 
-    public static void drawImage(@NotNull Graphics g) {
-        width = Handler.getWindow().getWidth();
-        height = Handler.getWindow().getHeight();
+    public static void drawImage(@NotNull Graphics g, int width, int height) {
+        Renderer.width = width;
+        Renderer.height = height;
         Renderer.g = g;
         g.translate(x, y);
         fill(DevConfig.BACKGROUND);
@@ -55,7 +54,9 @@ public class Renderer {
     private static void drawMenu() {
         for (IElement e : Menu.getElements()) {
             if (e instanceof PortList) {
-                for (Button port : ((PortList) e).ports) {
+                g.setColor(DevConfig.BACKGROUND);
+                g.fillRect(e.x, e.y, ((PortList) e).width, ((PortList) e).height);
+                for (Button port : ((PortList) e).portButtons) {
                     drawButton(port);
                 }
             } else if (e instanceof TextArea) {
@@ -73,17 +74,19 @@ public class Renderer {
     private static void drawPlotContainer(PlotContainer e) {
         if (!e.getPortPlotGroups().isEmpty()) {
             PortPlotGroup port = e.getPortPlotGroups().get(0);
-            drawButton(port.close);
             for (Plot plot : port.getPlots().values()) {
                 drawPlot(plot);
             }
+            g.setColor(DevConfig.BACKGROUND);
+            g.fillRect(port.close.x,port.close.y,port.close.width,port.close.height);
+            drawButton(port.close);
         }
     }
 
-    private static void drawPlot(Plot plot) {
+    private static void drawPlot(@NotNull Plot plot) {
         drawLabel(plot.title);
         drawTextbox(plot.range);
-        drawRect(plot,DevConfig.shell);
+        drawRect(plot, DevConfig.shell);
     }
 
     //region draw elements
@@ -123,6 +126,11 @@ public class Renderer {
     private static void drawTextbox(@NotNull Textbox textbox) {
         drawLabelText(textbox, textbox.textColor);
         drawRect(textbox, textbox.textColor);
+        if (textbox.cursor) {
+            int x = textbox.x + textbox.width / 2 + g.getFontMetrics().stringWidth(textbox.text) / 2 + 2;
+            int y = textbox.y + textbox.height / 2 + DevConfig.fontSize / 3;
+            g.drawLine(x, y, x, y - DevConfig.fontSize * 2 / 3);
+        }
     }
 
     private static void drawTextArea(@NotNull TextArea area) {

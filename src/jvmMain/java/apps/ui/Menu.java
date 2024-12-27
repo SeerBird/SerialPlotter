@@ -20,7 +20,7 @@ public class Menu {
     private static final TextArea log = new TextArea(0, 0, 100, 100);
     private static PortPlotGroup commandConsumer; // it's a plot in case I want to show stuff
     private static final Textbox commandLine = new Textbox(0, 0, 100,
-            DevConfig.fontSize+DevConfig.vertMargin*2, "",
+            DevConfig.fontSize + DevConfig.vertMargin * 2, "",
             (String command) -> {
                 if (commandConsumer == null) {
                     return; // maybe say smth?
@@ -42,39 +42,14 @@ public class Menu {
     private static IElement hovered;
     private static Focusable focused;
 
-    static {
+    public static void start() {
         //region create the presets for all the apps states
         //region main
         savePreset(ProgramState.main, log, portList, commandLine, plotContainer);
         //endregion
-        /*
-        //region host
-        savePreset(ProgramState.host,
-                new Button(DevConfig.WIDTH / 2 - 75, 200, 150, 150, Handler::hostToPlayServer, "Play", DevConfig.shell),
-                new Textbox(DevConfig.WIDTH / 2 - 75, 370, 150, 40, Config.getServerName(), (serverName) -> {
-                    Config.setServerName(serverName);
-                    Broadcaster.setMessage(Config.getServerName());
-                }, DevConfig.turtle));
         //endregion
-        //region connect
-        savePreset(ProgramState.discover,
-                serverList);
-        //endregion
-        //region lobby
-        savePreset(ProgramState.lobby,
-                playerList,
-                lobbyWaiting);
-        //endregion
-        //region playServer
-        savePreset(ProgramState.playServer, scoreBoard);
-        //endregion
-        //region playClient
-        savePreset(ProgramState.playClient, scoreBoard);
-        //endregion
-
-         */
-        //endregion
-        refreshMenuState();
+        elements.clear();
+        elements.addAll(menuPresets.get(ProgramState.main));
     }
 
     //region Update Contents
@@ -88,21 +63,22 @@ public class Menu {
             log.width = width / 3;
             plotContainer.width = width - width / 3;
             plotContainer.x = width / 3;
-            plotContainer.y = 0;
         } else {
             portList.width = 0;
             commandLine.width = 0;
             log.width = 0;
             plotContainer.width = width;
             plotContainer.x = 0;
-            plotContainer.y = 0;
         }
-        portList.updatePorts(); // determines portList's height
-        if(portList.height>height){
+        portList.y = 0;
+        portList.x = 0;
+        plotContainer.y = 0;
+        portList.updateButtons(); // determines portList's height
+        if (portList.height > height) {
             commandLine.text = "Stop contorting the window!";
         }
-        log.height = Math.max(0,height- commandLine.height);
-        commandLine.y = height- commandLine.height-DevConfig.vertMargin;
+        log.height = Math.max(0, height - commandLine.height);
+        commandLine.y = height - commandLine.height - DevConfig.vertMargin;
         plotContainer.height = height;
         //endregion
         plotContainer.arrange();
@@ -163,6 +139,9 @@ public class Menu {
     }
 
     public static void focus(Focusable element) {
+        if (focused != null && focused != element) {
+            focused.leave();
+        }
         focused = element;
     }
 
@@ -171,12 +150,9 @@ public class Menu {
         focused = null;
     }
 
-    public static void resize() {
-
-    }
-
     //endregion
     //region Rendering helpers
+
     public static ArrayList<IElement> getElements() {
         return elements;
     }

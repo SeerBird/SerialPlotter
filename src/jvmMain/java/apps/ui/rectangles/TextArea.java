@@ -1,5 +1,6 @@
 package apps.ui.rectangles;
 
+import apps.Handler;
 import apps.ui.Scrollable;
 import apps.util.DevConfig;
 
@@ -35,5 +36,7 @@ public class TextArea extends RectElement implements Scrollable {
 
     public void log(String string) { //called concurrently?
         newEntries.add(string);
+        refresh();
+        Handler.repaint(x,y,width,height);
     }
 }

@@ -1,5 +1,6 @@
 package apps.ui.rectangles;
 
+import apps.Handler;
 import apps.output.Renderer;
 import apps.output.animations.Animation;
 import apps.output.animations.TextCursorAnimation;
@@ -8,6 +9,10 @@ import apps.ui.Menu;
 
 import java.awt.*;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 
@@ -15,11 +20,13 @@ public class Textbox extends Label implements Focusable {
     final String defaultText;
     Consumer<String> action;
     String currentDefaultText;
-    Animation cursorAnimation;
+    public boolean cursor;
+    ScheduledFuture cursorAnimation;
 
     public Textbox(int x, int y, int width, int height, String defaultText, Consumer<String> action, Color textColor) {
         super(x, y, width, height, defaultText, textColor);
         this.defaultText = defaultText;
+        cursor = false;
         currentDefaultText = defaultText;
         this.action = action;
     }
@@ -32,13 +39,26 @@ public class Textbox extends Label implements Focusable {
     @Override
     public void enter() {
         Menu.focus(this);
-        cursorAnimation = Renderer.addAnimation(new TextCursorAnimation(this));
+        resetAnimation();
+    }
+    public void resetAnimation(){
+        if (cursorAnimation != null) {
+            cursorAnimation.cancel(true);
+        }
+        cursorAnimation = Executors.newScheduledThreadPool(1).scheduleAtFixedRate(()->{
+            cursor^=true;
+            Handler.repaint(x,y,width,height);
+        },0,400, TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void leave() {
         text = currentDefaultText;
-        Renderer.removeAnimation(cursorAnimation);
+        if (cursorAnimation != null) {
+            cursorAnimation.cancel(true);
+        }
+        cursor=false;
+        Handler.repaint(x,y,width,height);
     }
 
     public void useValue() {

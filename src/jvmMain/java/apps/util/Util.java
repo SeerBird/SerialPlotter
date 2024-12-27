@@ -1,6 +1,5 @@
 package apps.util;
 
-import apps.MainLoop;
 
 import java.net.URI;
 import java.nio.file.Files;
@@ -28,7 +27,7 @@ public class Util {
             }
             //endregion
         } catch (Exception death) {
-            MainLoop.terminate();
+
         }
     }
 }

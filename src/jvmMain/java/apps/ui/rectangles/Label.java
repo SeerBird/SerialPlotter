@@ -16,11 +16,6 @@ public class Label extends RectElement {
         this.textColor=textColor;
     }
 
-    @Override
-    public void release() {
-
-    }
-
     public void setText(String text) {
         this.text = text;
     }

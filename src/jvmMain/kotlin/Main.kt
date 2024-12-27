@@ -1,6 +1,6 @@
-import apps.MainLoop
+import apps.Handler
 
 fun main() {
-    MainLoop.run()
+    Handler.run()
 }
 
