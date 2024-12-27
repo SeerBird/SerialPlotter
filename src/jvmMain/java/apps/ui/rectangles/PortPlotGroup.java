@@ -20,6 +20,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
     HashMap<String, Plot> plots;
     HashMap<String, Plot> newPlots;
     IElement pressed;
+    String leftover;
     long lastReceivedTime;
 
     public PortPlotGroup(int x, int y, int width, int height, @NotNull SerialPort port) {
@@ -27,6 +28,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
         plots = new HashMap<>();
         newPlots = new HashMap<>();
         lastReceivedTime = 0;
+        leftover = "";
         this.port = port;
         boolean res = port.openPort();
         if (!res) {
@@ -94,7 +96,8 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                 lastReceivedTime = System.nanoTime();
                 byte[] buf = new byte[port.bytesAvailable()];
                 int numRead = port.readBytes(buf, buf.length);
-                String message = new String(buf, StandardCharsets.UTF_8);
+                String message = leftover+new String(buf, StandardCharsets.UTF_8);
+                leftover="";
                 //region read message
                 while (message.contains(";")) {
                     String packet = message.substring(0, message.indexOf(";")); // a:n,b:m,...,z:k
@@ -104,7 +107,9 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                         logger.info("Missing ',' before ';', what happened?");
                         break;
                     }
+                    //region read packet
                     while (packet.contains(",")) {
+                        //region read pair
                         String pair = packet.substring(0, packet.indexOf(",")); //a:n
                         if (!pair.contains(":")) {
                             logger.info("Missing ':' before ',', what happened?");
@@ -131,14 +136,17 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                             Handler.repaint(plot.x, plot.y, plot.width, plot.height);
                         }
                         //endregion
+                        //endregion
                         packet = packet.substring(packet.indexOf(",")+1);
                     }
                     if(!packet.isEmpty()){
                         logger.info("Leftovers of packet: "+packet);
                     }
+                    //endregion
                     message = message.substring(message.indexOf(";")+1);
                 }
                 if(!message.isEmpty()){
+                    //leftover = message;
                     logger.info("Leftovers of message: "+message);
                 }
                 //endregion

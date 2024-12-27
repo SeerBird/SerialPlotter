@@ -3,6 +3,8 @@ package apps;
 import apps.input.InputControl;
 import apps.input.InputInfo;
 import apps.output.AppWindow;
+import apps.output.Renderer;
+import apps.output.animations.Amogus;
 import apps.ui.Menu;
 import apps.content.Content;
 import apps.util.Logging;
@@ -32,10 +34,9 @@ public class Handler {
         }
         PortTester.start();
         state = ProgramState.main;
-        //region Define job dictionary
-        //endregion
         //region Set starting state
         Menu.start();
+        Renderer.start();
         //endregion
     }
 

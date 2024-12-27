@@ -2,6 +2,8 @@ package apps.ui.rectangles;
 
 
 import apps.Handler;
+import apps.output.Renderer;
+import apps.output.animations.Amogus;
 import apps.ui.Menu;
 import apps.util.DevConfig;
 import com.fazecast.jSerialComm.SerialPort;
@@ -12,9 +14,11 @@ import java.util.Comparator;
 public class PlotContainer extends RectElement {
     ArrayList<PortPlotGroup> portPlotGroups = new ArrayList<>();
     PortPlotGroup pressed;
+    ArrayList<Amogus> amogi;
 
     public PlotContainer(int x, int y, int width, int height) {
         super(x, y, width, height);
+        amogi=new ArrayList<>();
     }
 
     @Override
@@ -99,6 +103,19 @@ public class PlotContainer extends RectElement {
             plot.width = plotWidth;
             plot.height = plotHeight;
             plot.arrange();
+        }
+        //endregion
+        //region amogi
+        for(Amogus amogus:amogi){
+            Renderer.removeAnimation(amogus);
+        }
+        amogi.clear();
+        for(int n = plots.size();n<xn*yn;n++){
+            int i = n%xn;
+            int j = n/xn;
+            Amogus amogus = new Amogus(x+i*plotWidth,y+j*plotHeight,plotWidth,plotHeight);
+            amogi.add(amogus);
+            Renderer.addAnimation(amogus);
         }
         //endregion
         Handler.repaint(x,y,width,height);

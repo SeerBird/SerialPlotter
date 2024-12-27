@@ -1,6 +1,7 @@
 package apps.output;
 
 
+import apps.Handler;
 import apps.output.animations.Animation;
 import apps.ui.IElement;
 import apps.ui.Menu;
@@ -15,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class Renderer {
@@ -25,12 +28,19 @@ public class Renderer {
     static int y = 0;
     static int width = 0;
     static int height = 0;
-
-    public static void update() { //get new info and progress animations
-        for (Animation animation : new ArrayList<>(animations)) {
-            if (!animation.drawNext(g)) {
-                removeAnimation(animation);
+    public static void start(){
+        Executors.newScheduledThreadPool(1).scheduleAtFixedRate(()->{
+            for(Animation ani:animations){
+                ani.next();
+                Rectangle rect = ani.rect();
+                Handler.repaint(rect.x,rect.y,rect.width,rect.height);
             }
+        },8,1000/60, TimeUnit.MILLISECONDS);
+    }
+
+    public static void drawAnimations() { //get new info and progress animations
+        for (Animation animation : new ArrayList<>(animations)) {
+            animation.draw(g);
         }
     }
 
@@ -40,9 +50,9 @@ public class Renderer {
         Renderer.g = g;
         g.translate(x, y);
         fill(DevConfig.BACKGROUND);
-        update();
         drawContent();
         drawMenu();
+        drawAnimations();
         g.dispose();
     }
 
@@ -87,6 +97,7 @@ public class Renderer {
     }
 
     private static void drawPlot(@NotNull Plot plot) {
+        //logger.info("Started a plot");
         drawRect(plot, DevConfig.borders);
         //region draw plot line segments between data points
         int pwidth = plot.width;
@@ -103,6 +114,7 @@ public class Renderer {
             }
         }
         if (max == min) {
+            //logger.info("Only one value?");
             return; // nah you can figure out what the value is if it's only one. get out.
         }
         for (int i = 0; i < values.size() - 1; i++) {
@@ -115,13 +127,17 @@ public class Renderer {
         //region grid
         int order = (int) Math.round((Math.log(max - min)) / Math.log(10))-1;
         float unit = (float) Math.pow(10, order);
+        if(unit==0){
+            return;
+        }
         float unitRange = (max - min) / unit;
         g.setColor(DevConfig.gridColor);
         //region get valueGridSpacing
         int prevGridSpacing = Integer.MIN_VALUE;
-        int gridSpacing = pheight/2;
+
         float step = 0.5F;
         float unitGridSpacing = step;
+        int gridSpacing = (int) Math.ceil(pheight*unitRange/unitGridSpacing);
         while (Math.abs(prevGridSpacing - DevConfig.optimalGridlineSpacing) >
                 Math.abs(gridSpacing - DevConfig.optimalGridlineSpacing)) {
             unitGridSpacing+=step;
@@ -129,6 +145,9 @@ public class Renderer {
             gridSpacing = (int) (pheight / (unitRange / (unitGridSpacing)));
         }
         unitGridSpacing-=step;
+        if(gridSpacing<DevConfig.optimalGridlineSpacing/2){
+            logger.info("Ass spacing");
+        }
         float valueGridSpacing = ((float) unitGridSpacing * unit);
         //endregion
         //region find main line
@@ -164,6 +183,7 @@ public class Renderer {
         plot.title.text = title;
         drawLabel(plot.title);
         drawTextbox(plot.range);
+        //logger.info("Finished a plot");
     }
 
     private static float nDecPlaces(float number, int n) {

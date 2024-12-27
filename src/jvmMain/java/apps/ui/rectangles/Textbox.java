@@ -1,16 +1,12 @@
 package apps.ui.rectangles;
 
 import apps.Handler;
-import apps.output.Renderer;
-import apps.output.animations.Animation;
-import apps.output.animations.TextCursorAnimation;
 import apps.ui.Focusable;
 import apps.ui.Menu;
 
 import java.awt.*;
 import java.util.Objects;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
