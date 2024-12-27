@@ -9,7 +9,7 @@ import com.fazecast.jSerialComm.SerialPort;
 import java.util.ArrayList;
 
 public class PortList extends RectElement{
-    ArrayList<Button> ports;
+    public ArrayList<Button> ports;
     Button pressed;
     public PortList(int x, int y, int width, int height) {
         super(x, y, width, height);
@@ -22,10 +22,9 @@ public class PortList extends RectElement{
         this.ports.clear();
         int topY = y;
         for(SerialPort port: Handler.getPorts()){
-            this.ports.add(new Button(x,topY,width, DevConfig.portButtonHeight,()->{
-                Menu.addPlot(port);
-            },port.getDescriptivePortName(), DevConfig.shell));
-            topY+=DevConfig.portButtonHeight;
+            this.ports.add(new Button(x,topY,width, DevConfig.fontSize+DevConfig.vertMargin*2,
+                    ()-> Menu.addPortPlotGroup(port),port.getDescriptivePortName(), DevConfig.shell));
+            topY+=DevConfig.fontSize+20;
         }
         height = topY-y;
     }

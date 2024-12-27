@@ -20,6 +20,11 @@ public abstract class RectElement extends IElement {
     }
 
     @Override
+    public void release() {
+
+    }
+
+    @Override
     public boolean hover(double x, double y) {
         hovered = inBounds(x,y);
         return hovered;

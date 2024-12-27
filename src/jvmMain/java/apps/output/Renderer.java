@@ -8,14 +8,17 @@ import apps.ui.Menu;
 import apps.ui.rectangles.*;
 import apps.ui.rectangles.Button;
 import apps.ui.rectangles.Label;
+import apps.ui.rectangles.TextArea;
 import apps.util.DevConfig;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 public class Renderer {
+    private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     static Graphics g;
     static final ArrayList<Animation> animations = new ArrayList<>();
     static int x = 0;
@@ -51,16 +54,36 @@ public class Renderer {
     //region Menu
     private static void drawMenu() {
         for (IElement e : Menu.getElements()) {
-            if (e instanceof Button) {
-                drawButton((Button) e);
+            if (e instanceof PortList) {
+                for (Button port : ((PortList) e).ports) {
+                    drawButton(port);
+                }
+            } else if (e instanceof TextArea) {
+                drawTextArea((TextArea) e);
             } else if (e instanceof Textbox) {
                 drawTextbox((Textbox) e);
-            } else if (e instanceof Toggleable) {
-                drawToggleable((Toggleable) e);
-            } else if (e instanceof Label) {
-                drawLabel((Label) e);
+            } else if (e instanceof PlotContainer) {
+                drawPlotContainer((PlotContainer) e);
+            } else {
+                logger.info("Encountered an IElement I did not anticipate. How?");
             }
         }
+    }
+
+    private static void drawPlotContainer(PlotContainer e) {
+        if (!e.getPortPlotGroups().isEmpty()) {
+            PortPlotGroup port = e.getPortPlotGroups().get(0);
+            drawButton(port.close);
+            for (Plot plot : port.getPlots().values()) {
+                drawPlot(plot);
+            }
+        }
+    }
+
+    private static void drawPlot(Plot plot) {
+        drawLabel(plot.title);
+        drawTextbox(plot.range);
+        drawRect(plot,DevConfig.shell);
     }
 
     //region draw elements
@@ -78,7 +101,7 @@ public class Renderer {
         }
         g.drawRect(button.x, button.y, button.width, button.height);
 
-        g.drawRect(button.x + 4, button.y + 4, button.width - 8, button.height - 8);
+        //g.drawRect(button.x + 4, button.y + 4, button.width - 8, button.height - 8);
         drawLabelText(button, button.textColor);
     }
 
@@ -102,9 +125,38 @@ public class Renderer {
         drawRect(textbox, textbox.textColor);
     }
 
+    private static void drawTextArea(@NotNull TextArea area) {
+        ArrayList<String> entries = area.entries;
+        if (area.width < 10) {
+            return;
+        }
+        int topy = area.y + area.height;
+        for (int i = entries.size() - 1; i > -1; i--) {
+            g.setColor(DevConfig.shell);
+            topy -= g.getFontMetrics().getHeight();
+            if (topy < area.y) {
+                break;
+            }
+            String entry = entries.get(i);
+            //region shorten entry to make it fit, adding ... if shortening was needed
+            if (g.getFontMetrics().stringWidth(entry) > area.width) {
+                entry = truncateString(entry, area.width);
+            }
+            g.drawString(entry, area.x, topy);
+            //endregion
+        }
+    }
+
     private static void drawLabelText(@NotNull Label label, Color color) {
         g.setColor(color);
-        g.drawString(label.text, label.x + label.width / 2 - g.getFontMetrics().stringWidth(label.text) / 2, label.y + label.height / 2);
+        int y = label.y + label.height / 2 + DevConfig.fontSize / 3;
+        if (getStringWidth(label.text) < label.width - DevConfig.labelHorMargin * 2) {
+            g.drawString(label.text, label.x + label.width / 2 - g.getFontMetrics().stringWidth(label.text) / 2, y);
+        } else {
+            g.drawString(truncateString(label.text, label.width - DevConfig.labelHorMargin * 2),
+                    label.x + DevConfig.labelHorMargin, y);
+        }
+
     }
 
     //endregion
@@ -124,15 +176,27 @@ public class Renderer {
 
     private static void fill(Color c) {
         g.setColor(c);
-        g.fillRect(-200, -200, width+ 400, height + 400);
+        g.fillRect(-200, -200, width + 400, height + 400);
     }
 
-    public static int getStringWidth(String string) {
+    private static int getStringWidth(String string) {
         if (g != null) {
             return g.getFontMetrics().stringWidth(string);
         } else {
             return -1;
         }
+    }
+
+    @NotNull
+    private static String truncateString(String string, int length) {
+        String entry = string;
+        do {
+            if (entry.length() <= 1) {
+                return "";
+            }
+            entry = entry.substring(0, entry.length() - 1);
+        } while (g.getFontMetrics().stringWidth(entry + "...") > length);
+        return entry + "...";
     }
 
     public static void setPos(@NotNull ArrayRealVector p) {

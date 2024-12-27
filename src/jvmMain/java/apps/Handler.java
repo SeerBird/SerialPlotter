@@ -8,6 +8,7 @@ import apps.ui.Menu;
 import apps.content.Content;
 import com.fazecast.jSerialComm.*;
 
+import java.awt.image.BufferStrategy;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -34,6 +35,7 @@ public class Handler {
     static final InputInfo input = new InputInfo();
 
     static {
+        PortTester.start();
         state = ProgramState.main;
         //region Define job dictionary
         job.clear();
@@ -49,12 +51,18 @@ public class Handler {
         //region Set starting state
         addJob(Job.handleInput);
         addJob(Job.updateMenu);
+        Menu.refreshMenuState();
         //endregion
     }
 
     public static void out() {
-        Renderer.drawImage(window.getCanvas());
-        window.showCanvas();
+        BufferStrategy strategy = window.getCanvas();
+        do {
+            do {
+                Renderer.drawImage(strategy.getDrawGraphics());
+            } while (strategy.contentsRestored());
+            strategy.show();
+        } while (strategy.contentsLost());
     }
 
     public static void update() {
@@ -75,7 +83,7 @@ public class Handler {
         //endregion
     }
 
-    public static SerialPort[] getPorts(){
+    public static SerialPort[] getPorts() {
         return SerialPort.getCommPorts();
     }
 

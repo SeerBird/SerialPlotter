@@ -1,6 +1,8 @@
 package apps.output;
 
 
+import apps.Handler;
+import apps.Resources;
 import apps.input.InputControl;
 import apps.util.DevConfig;
 
@@ -9,6 +11,8 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.image.BufferStrategy;
+import java.io.File;
+import java.io.IOException;
 
 public class AppWindow extends JFrame {
     BufferStrategy strategy;
@@ -22,13 +26,21 @@ public class AppWindow extends JFrame {
         System.out.println(Toolkit.getDefaultToolkit().getScreenSize());
         setResizable(true);
         setSize(width, height);
-        this.setLocation(-10,0); // why?
+        this.setLocation(0, 0);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         //region Add canvas(for buffer strategy I think?? might be unnecessary)
         Canvas canvas = new Canvas();
+        //region set font
+        try {
+            canvas.setFont(Font.createFont(Font.TRUETYPE_FONT, Resources.comfortaa)
+                    .deriveFont(Font.BOLD, DevConfig.fontSize));
+        } catch (FontFormatException | IOException e) {
+            canvas.setFont(canvas.getFont().deriveFont(Font.BOLD, DevConfig.fontSize));
+        }
+        //endregion
         canvas.setIgnoreRepaint(true);
         canvas.setSize(width, height);
-        add(canvas);
+        getContentPane().add(canvas);
         pack();
         //endregion
         //region buffer strategy
@@ -52,10 +64,14 @@ public class AppWindow extends JFrame {
         });
         setVisible(true);
     }
+
     public void showCanvas() {
-        strategy.show();
+        if (!strategy.contentsLost()) {
+            strategy.show();
+        }
     }
-    public int getWidth(){
+
+    public int getWidth() {
         return width;
     }
 
@@ -64,9 +80,10 @@ public class AppWindow extends JFrame {
         return height;
     }
 
-    public Graphics getCanvas() {
+    public BufferStrategy getCanvas() {
         width = newwidth;
         height = newheight;
-        return strategy.getDrawGraphics();
+
+        return strategy;
     }
 }

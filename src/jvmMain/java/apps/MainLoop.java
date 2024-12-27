@@ -30,11 +30,7 @@ public class MainLoop {
                 Handler.out();
                 last = now;
             } else { // otherwise, sleep for the time left
-                try {
-                    Thread.sleep(timeLeft / 1001000);
-                } catch (InterruptedException e) {
-                    logger.severe(e.getMessage());
-                }
+                Handler.out();
             }
         }
     }
