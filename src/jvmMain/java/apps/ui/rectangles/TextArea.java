@@ -22,6 +22,7 @@ public class TextArea extends RectElement implements Scrollable {
         while (entries.size() > DevConfig.maxLogSize) {
             entries.remove(0);
         }
+        newEntries.clear();
     }
 
     @Override
@@ -36,7 +37,6 @@ public class TextArea extends RectElement implements Scrollable {
 
     public void log(String string) { //called concurrently?
         newEntries.add(string);
-        refresh();
         Handler.repaint(x,y,width,height);
     }
 }

@@ -66,6 +66,9 @@ public class AppWindow extends JFrame {
     public void repaintCanvas(int x,int y,int width, int height){
         canvas.repaint(x,y,width,height);
     }
+    public void repaintCanvas(){
+        canvas.repaint();
+    }
 
     public int getWidth() {
         return width;

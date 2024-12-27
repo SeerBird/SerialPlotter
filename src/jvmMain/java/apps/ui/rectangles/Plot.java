@@ -1,10 +1,6 @@
 package apps.ui.rectangles;
 
-import apps.ui.Menu;
 import apps.util.DevConfig;
-import com.fazecast.jSerialComm.SerialPort;
-import com.fazecast.jSerialComm.SerialPortDataListener;
-import com.fazecast.jSerialComm.SerialPortEvent;
 
 import java.util.ArrayList;
 
@@ -23,9 +19,9 @@ public class Plot extends RectElement {
             } catch (NumberFormatException e) {
                 // moan I think.
             }
-        }, DevConfig.shell);
+        }, DevConfig.borders);
         values = new ArrayList<>();
-        this.title = new Label(x,y,width/2,height,title,DevConfig.shell);
+        this.title = new Label(x,y,width/2,height,"E0;"+title,DevConfig.borders);
     }
 
 
@@ -52,6 +48,10 @@ public class Plot extends RectElement {
         while (values.size() > rangeN) {
             values.remove(0); // this feels bad computationally. I'm sure it's fine though.
         }
+    }
+
+    public ArrayList<Float> getValues() {
+        return values;
     }
 
     public void arrange() {

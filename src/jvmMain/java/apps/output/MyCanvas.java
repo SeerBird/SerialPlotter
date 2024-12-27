@@ -7,9 +7,9 @@ import java.awt.image.BufferedImage;
 public class MyCanvas extends Canvas {
     private BufferedImage bufferImage;
     private Graphics bufferGraphics;
+    private BufferStrategy strategy;
 
     public void paint(Graphics g) {
-        BufferStrategy strategy = getBufferStrategy();
         if(strategy==null){
             createBufferStrategy(2);
             strategy = getBufferStrategy();
@@ -17,5 +17,8 @@ public class MyCanvas extends Canvas {
         Graphics bg = strategy.getDrawGraphics();
         Renderer.drawImage(bg, getWidth(), getHeight());
         strategy.show();
+    }
+    public void update(Graphics g) {
+        paint(g);
     }
 }

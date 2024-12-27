@@ -47,6 +47,7 @@ kotlin {
                 implementation("com.google.code.gson:gson:2.10.1")
                 implementation("com.google.protobuf:protobuf-java:3.25.1")
                 implementation("com.fazecast:jSerialComm:2.11.0")
+                implementation("org.ejml:ejml-simple:0.39")
             }
         }
     }

@@ -42,6 +42,9 @@ public class Handler {
     public static void repaint(int x, int y, int width, int height) {
         window.repaintCanvas(x, y, width, height);
     }
+    public static void repaint(){
+        window.repaintCanvas();
+    }
 
     public static SerialPort[] getPorts() {
         return SerialPort.getCommPorts();

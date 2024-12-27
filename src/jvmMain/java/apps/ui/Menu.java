@@ -35,7 +35,7 @@ public class Menu {
                     // maybe SAY SMTH..??
                 });
                 task.start();
-            }, DevConfig.shell);
+            }, DevConfig.borders);
     //endregion
     private static final HashMap<ProgramState, ArrayList<IElement>> menuPresets = new HashMap<>();
     private static IElement pressed;
@@ -82,7 +82,6 @@ public class Menu {
         plotContainer.height = height;
         //endregion
         plotContainer.arrange();
-        log.refresh();
     }
 
     public static void refreshMenuState() {
