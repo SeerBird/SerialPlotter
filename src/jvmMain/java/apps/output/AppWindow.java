@@ -14,8 +14,10 @@ import java.awt.event.ComponentEvent;
 import java.awt.image.BufferStrategy;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 public class AppWindow extends JFrame {
+    private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private int width = DevConfig.DWIDTH;
     private int height = DevConfig.DHEIGHT;
     private int newwidth = width;
@@ -24,7 +26,6 @@ public class AppWindow extends JFrame {
 
     public AppWindow() {
         setIgnoreRepaint(true);
-        System.out.println(Toolkit.getDefaultToolkit().getScreenSize());
         setResizable(true);
         setSize(width, height);
         this.setLocation(0, 0);
@@ -32,12 +33,16 @@ public class AppWindow extends JFrame {
         //region Add canvas(for buffer strategy I think?? might be unnecessary)
         canvas = new MyCanvas();
         canvas.setBackground(DevConfig.BACKGROUND);
+        logger.info("Tryna init the app window");
         //region set font
         try {
             canvas.setFont(Font.createFont(Font.TRUETYPE_FONT, Resources.comfortaa)
                     .deriveFont(Font.BOLD, DevConfig.fontSize));
         } catch (FontFormatException | IOException e) {
             canvas.setFont(canvas.getFont().deriveFont(Font.BOLD, DevConfig.fontSize));
+        }catch (Exception e){
+            logger.info(e.getMessage());
+            throw new RuntimeException(e);
         }
         //endregion
         canvas.setSize(width, height);

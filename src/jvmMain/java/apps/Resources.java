@@ -1,16 +1,18 @@
 package apps;
 
-import java.io.File;
-import java.net.URISyntaxException;
+import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 public class Resources {
+    private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     public static final URL goodnight;
     public static URL vine;
     public static URL pew;
     public static URL pipe;
+    public static URL textBoxFail;
     public static File comfortaa;
     public static ArrayList<File> amogus;
 
@@ -19,15 +21,57 @@ public class Resources {
         vine = Resources.class.getResource("vine.wav");
         pew = Resources.class.getResource("pew.wav");
         pipe = Resources.class.getResource("pipe.wav");
+        textBoxFail = Resources.class.getResource("textBoxFail.wav");
         amogus = new ArrayList<>();
         try {
-            comfortaa = new File(Objects.requireNonNull(Resources.class.getResource("Comfortaa.ttf")).toURI());
+            comfortaa = getFile("Comfortaa.ttf");
             for (int i = 0; i < 11; i++) {
-                amogus.add(new File(Objects.requireNonNull(Resources.class
-                        .getResource("amogus/ezgif-frame-00" + (i+1)+".jpg")).toURI()));
+                amogus.add(getFile("amogus/ezgif-frame-00" + (i + 1) + ".jpg"));
             }
-        } catch (URISyntaxException e) {
+        } catch (Exception e) {
+            logger.info("File: " + e.getMessage());
+            logger.info((Objects.requireNonNull(Resources.class.getResource("Comfortaa.ttf"))).toExternalForm());
             throw new RuntimeException(e);
         }
+        assert (comfortaa != null);
+    }
+
+    private static File getFile(String path) {
+        File file;
+        URL res = Resources.class.getResource(path);
+        if(res==null){
+            logger.info("URL not found!");
+            return null;
+        }
+        if (res.getProtocol().equals("jar")) {
+            try {
+                InputStream input = Resources.class.getResourceAsStream(path);
+                if(input==null){
+                    logger.info("Couldn't get the InputStream");
+                    return null;
+                }
+                file = File.createTempFile("tempfile", ".tmp");
+                OutputStream out = new FileOutputStream(file);
+                int read;
+                byte[] bytes = new byte[1024];
+
+                while ((read = input.read(bytes)) != -1) {
+                    out.write(bytes, 0, read);
+                }
+                out.close();
+                file.deleteOnExit();
+            } catch (IOException ex) {
+                logger.info(ex.getMessage());
+                return null;
+            }
+        } else {
+            //this will probably work in your IDE, but not from a JAR
+            file = new File(res.getFile());
+        }
+
+        if (!file.exists()) {
+            logger.info("File not found");
+        }
+        return file;
     }
 }

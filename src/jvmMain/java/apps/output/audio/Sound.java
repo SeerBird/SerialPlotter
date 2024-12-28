@@ -4,5 +4,6 @@ public enum Sound {
     death,
     button,
     webThrow,
-    collision;
+    collision,
+    textBoxFail
 }

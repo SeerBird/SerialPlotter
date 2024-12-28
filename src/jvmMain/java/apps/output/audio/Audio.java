@@ -26,6 +26,7 @@ public class Audio {
         } catch (LineUnavailableException e) {
             throw new RuntimeException(e);
         }
+        soundStreams.put(textBoxFail, Resources.textBoxFail);
         soundStreams.put(death, Resources.goodnight);
         soundStreams.put(button, Resources.vine);
         soundStreams.put(webThrow, Resources.pew);

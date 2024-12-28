@@ -10,7 +10,7 @@ public class Util {
 
     static {
         try {
-            String prefix = "/TurtleSmash/";//remove TurtleSmash for windows?
+            String prefix = "/SerialPlotter/";//remove prefix for windows?
             //region get log path
             String os = System.getProperty("os.name");
             URI uri;

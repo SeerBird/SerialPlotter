@@ -1,5 +1,7 @@
 package apps.ui.rectangles;
 
+import apps.output.audio.Audio;
+import apps.output.audio.Sound;
 import apps.util.DevConfig;
 
 import java.util.ArrayList;
@@ -17,7 +19,7 @@ public class Plot extends RectElement {
             try {
                 rangeN = Integer.parseInt(string);
             } catch (NumberFormatException e) {
-                // moan I think.
+                Audio.playSound(Sound.textBoxFail);
             }
         }, DevConfig.borders);
         values = new ArrayList<>();
