@@ -250,7 +250,8 @@ public class Renderer {
             return;
         }
         int topy = area.y + area.height;
-        for (int i = entries.size() - 1; i > -1; i--) {
+        int displayedEntryCount = 0;
+        for (int i = entries.size() - 1 - area.shiftFromBottom; i > -1; i--) {
             g.setColor(DevConfig.borders);
             topy -= g.getFontMetrics().getHeight();
             if (topy < area.y) {
@@ -262,8 +263,31 @@ public class Renderer {
                 entry = truncateString(entry, area.width);
             }
             g.drawString(entry, area.x, topy);
+            displayedEntryCount++;
             //endregion
         }
+        int pos = area.shiftFromBottom;
+        float proportion = ((float) ((entries.size() + 1) - area.shiftFromBottom)) / (entries.size() + 1);
+        int size = area.height;
+        if (!entries.isEmpty()) {
+            size = Math.min(area.height, Math.max(DevConfig.minSliderLength,
+                    (displayedEntryCount * area.height) / (entries.size())));
+        }
+        int middle = (int) (area.y + (area.height-size) * proportion)+size/2;
+        int top = middle - (size + 1) / 2;
+        int bot = middle + (size + 1) / 2;
+        int shift = 0; //down
+        if (top < area.y) {
+            shift = area.y - top;
+        }
+        if (bot > area.y + area.height) {
+            shift = area.y + area.height - bot;
+        }
+        top += shift;
+        bot += shift;
+        g.setColor(DevConfig.sliderColor);
+        int width = Math.min(DevConfig.maxSliderWidth, area.width / 8);
+        g.fillRect(area.x + area.width - width, top, width, (bot - top));
     }
 
     private static void drawLabelText(@NotNull Label label, Color color) {
@@ -288,8 +312,9 @@ public class Renderer {
     }
 
     public static void removeAnimation(Animation animation) {
-        synchronized (animations){
-        animations.remove(animation);}
+        synchronized (animations) {
+            animations.remove(animation);
+        }
     }
     //endregion
 

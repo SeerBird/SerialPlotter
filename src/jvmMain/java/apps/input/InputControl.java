@@ -53,6 +53,7 @@ public class InputControl extends MouseAdapter implements KeyListener {
     public void mouseMoved(@NotNull MouseEvent e) {
         mousepos.setEntry(0, e.getPoint().x);
         mousepos.setEntry(1, e.getPoint().y);
+        Menu.hover(mousepos);
     }
 
     @Override
@@ -63,7 +64,7 @@ public class InputControl extends MouseAdapter implements KeyListener {
 
     @Override
     public void mouseWheelMoved(@NotNull MouseWheelEvent e) {
-        scroll += e.getScrollAmount();
+        Menu.scroll(e.getWheelRotation());
     }
 
     //endregion

@@ -9,12 +9,14 @@ import java.util.ArrayList;
 public class TextArea extends RectElement implements Scrollable {
     public ArrayList<String> entries;
     ArrayList<String> newEntries;
-    int bottomEntry;
+    int deltaShift;
+    public int shiftFromBottom;
 
     public TextArea(int x, int y, int width, int height) {
         super(x, y, width, height);
         entries = new ArrayList<>();
         newEntries = new ArrayList<>();
+        shiftFromBottom=0;
     }
 
     public void refresh() {
@@ -23,6 +25,14 @@ public class TextArea extends RectElement implements Scrollable {
             entries.remove(0);
         }
         newEntries.clear();
+        shiftFromBottom+=deltaShift;
+        deltaShift=0;
+        if(shiftFromBottom>entries.size()-1){
+            shiftFromBottom=entries.size()-1;
+        }
+        if(shiftFromBottom<0){
+            shiftFromBottom=0;
+        }
     }
 
     @Override
@@ -32,10 +42,14 @@ public class TextArea extends RectElement implements Scrollable {
 
     @Override
     public void scroll(int steps) {
-
+        deltaShift -=steps;
+        Handler.repaint(x,y,width,height);
     }
 
     public void log(String string) { //called concurrently?
+        if(shiftFromBottom!=0){
+            shiftFromBottom++;
+        }
         newEntries.add(string);
         Handler.repaint(x,y,width,height);
     }

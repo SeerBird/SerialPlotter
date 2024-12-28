@@ -19,7 +19,7 @@ public class Plot extends RectElement {
             try {
                 rangeN = Integer.parseInt(string);
             } catch (NumberFormatException e) {
-                Audio.playSound(Sound.textBoxFail);
+                Audio.playSound(Sound.stopPls);
             }
         }, DevConfig.borders);
         values = new ArrayList<>();

@@ -13,6 +13,7 @@ public class Resources {
     public static URL pew;
     public static URL pipe;
     public static URL textBoxFail;
+    public static URL stoppls;
     public static File comfortaa;
     public static ArrayList<File> amogus;
 
@@ -22,6 +23,7 @@ public class Resources {
         pew = Resources.class.getResource("pew.wav");
         pipe = Resources.class.getResource("pipe.wav");
         textBoxFail = Resources.class.getResource("textBoxFail.wav");
+        stoppls = Resources.class.getResource("stoppls.wav");
         amogus = new ArrayList<>();
         try {
             comfortaa = getFile("Comfortaa.ttf");

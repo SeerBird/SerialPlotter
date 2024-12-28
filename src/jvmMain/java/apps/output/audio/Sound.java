@@ -3,7 +3,8 @@ package apps.output.audio;
 public enum Sound {
     death,
     button,
-    webThrow,
+    pewPew,
     collision,
-    textBoxFail
+    textBoxFail,
+    stopPls
 }

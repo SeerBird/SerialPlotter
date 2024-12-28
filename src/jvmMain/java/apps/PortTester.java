@@ -34,7 +34,6 @@ public class PortTester {
                         SerialPort.LISTENING_EVENT_PORT_DISCONNECTED |
                         SerialPort.LISTENING_EVENT_DATA_WRITTEN;
             }
-
             @Override
             public void serialEvent(SerialPortEvent event) {
                 if (event.getEventType() == SerialPort.LISTENING_EVENT_DATA_AVAILABLE) {
@@ -42,7 +41,7 @@ public class PortTester {
                     int numRead = port.readBytes(buf, buf.length);
                     String message = new String(buf, StandardCharsets.UTF_8);
                     logger.info("Tester got '" + message + "'");
-                    buf = ("(gay:"+ System.nanoTime() % 3 + ")").getBytes(StandardCharsets.UTF_8);
+                    buf = ("(gaoo:"+ System.nanoTime() % 3 + ")").getBytes(StandardCharsets.UTF_8);
                     port.writeBytes(buf, buf.length);
                 }
             }
@@ -58,6 +57,6 @@ public class PortTester {
             //byte[] buf = ("goo:"+ goo+";").getBytes(StandardCharsets.UTF_8);
 
             port.writeBytes(buf, buf.length);
-        }, 8, 20, TimeUnit.MILLISECONDS);
+        }, 8, 100, TimeUnit.MILLISECONDS);
     }
 }

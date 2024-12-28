@@ -48,7 +48,10 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
         }
         PortPlotGroup ref = this;
         close = new Button(x, y, width, height, () -> {
-            Thread task = new Thread(port::closePort);
+            Thread task = new Thread(()->{
+                port.closePort();
+                Menu.log("Closed port "+port.getDescriptivePortName());
+            });
             task.start();
             Menu.removePortPlotGroup(ref);
         }, "X", DevConfig.borders);

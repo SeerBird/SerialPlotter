@@ -26,7 +26,7 @@ public class Button extends Label {
     public void release() {
         if (pressed) {//unnecessary?
             action.run();
-            Audio.playSound(Sound.button);
+            //Audio.playSound(Sound.button);
         }
         pressed = false;
     }

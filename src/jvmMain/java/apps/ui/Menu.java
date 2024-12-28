@@ -2,6 +2,8 @@ package apps.ui;
 
 import apps.Handler;
 import apps.ProgramState;
+import apps.output.audio.Audio;
+import apps.output.audio.Sound;
 import apps.ui.rectangles.*;
 import apps.util.DevConfig;
 import com.fazecast.jSerialComm.SerialPort;
@@ -64,7 +66,7 @@ public class Menu {
             commandLine.text = "Stop contorting the window!";
         }
         log.height = Math.max(0, height - commandLine.height);
-        commandLine.y = height - commandLine.height - DevConfig.vertMargin;
+        commandLine.y = height - commandLine.height;
         plotContainer.height = height;
         //endregion
         plotContainer.arrange();
@@ -87,6 +89,7 @@ public class Menu {
         });
         task.start();
         commandLine.currentDefaultText = "";
+        Audio.playSound(Sound.pewPew);
     }
 
     public static void refreshMenuState() {
@@ -119,7 +122,7 @@ public class Menu {
     }
 
     public static void hover(ArrayRealVector pos) {
-        for (IElement element : elements) {
+        for (IElement element : new ArrayList<>(elements)) {
             if (element.hover(pos)) {
                 hovered = element;
                 return;
