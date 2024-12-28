@@ -5,10 +5,8 @@ import apps.output.AppWindow;
 import apps.output.Renderer;
 import apps.ui.Menu;
 import apps.util.GFormatter;
-import apps.util.Util;
 import com.fazecast.jSerialComm.*;
 
-import java.io.IOException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -20,19 +18,26 @@ public class Handler {
     static{
         //region set up my logger
         Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+
+        ConsoleHandler console = new ConsoleHandler();
+        GFormatter formatter = new GFormatter();
+        //region file logger
+        /*
         FileHandler fileTxt;
         try {
             fileTxt = new FileHandler(Util.path + "SerialLog%u.%g.txt", true);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        ConsoleHandler console = new ConsoleHandler();
-        GFormatter formatter = new GFormatter();
         fileTxt.setFormatter(formatter);
-        console.setFormatter(formatter);
-        console.setLevel(Level.INFO);
         fileTxt.setLevel(Level.INFO);
         logger.addHandler(fileTxt);
+         */
+        //endregion
+        console.setFormatter(formatter);
+        console.setLevel(Level.INFO);
+
+
         logger.addHandler(console);
         //endregion
         //region silence default console
@@ -54,7 +59,6 @@ public class Handler {
 
     public static void run() {
         Runtime.getRuntime().addShutdownHook(onShutdown);
-        PortTester.start();
         state = ProgramState.main;
         //region Set starting state
         Menu.start();

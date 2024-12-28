@@ -33,7 +33,7 @@ public class DevConfig {
     public static int maxParticles = 100;
     public static int portButtonHeight = 20;
     public static long portListRefreshPeriod = 100; // millis
-    public static long messageReceivePeriod = 100; // millis
+    public static long messageReceivePeriod = 10; // millis
 
     //endregion
 }

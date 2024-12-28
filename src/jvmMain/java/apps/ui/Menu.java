@@ -175,8 +175,8 @@ public class Menu {
         elements.clear();
     }
 
-    public static void removePortPlotGroup(PortPlotGroup plot) {
-        plotContainer.removePlot(plot);
+    public static void removePortPlotGroup(PortPlotGroup port) {
+        plotContainer.removePortPlotGroup(port);
     }
     //endregion
 }

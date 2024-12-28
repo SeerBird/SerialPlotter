@@ -51,8 +51,9 @@ public class PlotContainer extends RectElement {
         Handler.repaint(x,y,width,height);
     }
 
-    public void removePlot(PortPlotGroup plot) {
+    public void removePortPlotGroup(PortPlotGroup plot) {
         portPlotGroups.remove(plot);
+        removeAmogi();
         Handler.repaint(x,y,width,height);
     }
 
@@ -106,10 +107,7 @@ public class PlotContainer extends RectElement {
         }
         //endregion
         //region amogi
-        for(Amogus amogus:amogi){
-            Renderer.removeAnimation(amogus);
-        }
-        amogi.clear();
+        removeAmogi();
         for(int n = plots.size();n<xn*yn;n++){
             int i = n%xn;
             int j = n/xn;
@@ -119,5 +117,11 @@ public class PlotContainer extends RectElement {
         }
         //endregion
         Handler.repaint(x,y,width,height);
+    }
+    private void removeAmogi(){
+        for(Amogus amogus:amogi){
+            Renderer.removeAnimation(amogus);
+        }
+        amogi.clear();
     }
 }

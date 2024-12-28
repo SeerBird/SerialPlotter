@@ -33,7 +33,6 @@ public class AppWindow extends JFrame {
         //region Add canvas(for buffer strategy I think?? might be unnecessary)
         canvas = new MyCanvas();
         canvas.setBackground(DevConfig.BACKGROUND);
-        logger.info("Tryna init the app window");
         //region set font
         try {
             canvas.setFont(Font.createFont(Font.TRUETYPE_FONT, Resources.comfortaa)

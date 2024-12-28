@@ -25,8 +25,8 @@ public class Resources {
         amogus = new ArrayList<>();
         try {
             comfortaa = getFile("Comfortaa.ttf");
-            for (int i = 0; i < 11; i++) {
-                amogus.add(getFile("amogus/ezgif-frame-00" + (i + 1) + ".jpg"));
+            for (int i = 0; i < 22; i++) {
+                amogus.add(getFile("amogus/ezgif-frame-0" + (i + 1) + ".jpg"));
             }
         } catch (Exception e) {
             logger.info("File: " + e.getMessage());

@@ -28,14 +28,17 @@ public class Renderer {
     static int y = 0;
     static int width = 0;
     static int height = 0;
-    public static void start(){
-        Executors.newScheduledThreadPool(1).scheduleAtFixedRate(()->{
-            for(Animation ani:animations){
-                ani.next();
-                Rectangle rect = ani.rect();
-                Handler.repaint(rect.x,rect.y,rect.width,rect.height);
+
+    public static void start() {
+        Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+            synchronized (animations) {
+                for (Animation ani : animations) {
+                    ani.next();
+                    Rectangle rect = ani.rect();
+                    Handler.repaint(rect.x, rect.y, rect.width, rect.height);
+                }
             }
-        },8,1000/60, TimeUnit.MILLISECONDS);
+        }, 8, 1000 / 60, TimeUnit.MILLISECONDS);
     }
 
     public static void drawAnimations() { //get new info and progress animations
@@ -51,8 +54,8 @@ public class Renderer {
         g.translate(x, y);
         fill(DevConfig.BACKGROUND);
         drawContent();
-        drawMenu();
         drawAnimations();
+        drawMenu();
         g.dispose();
     }
 
@@ -63,7 +66,6 @@ public class Renderer {
 
     //region Menu
     private static void drawMenu() {
-
         for (IElement e : Menu.getElements()) {
             if (e instanceof PortList) {
                 g.setColor(DevConfig.BACKGROUND);
@@ -125,9 +127,9 @@ public class Renderer {
         }
         //endregion
         //region grid
-        int order = (int) Math.round((Math.log(max - min)) / Math.log(10))-1;
+        int order = (int) Math.round((Math.log(max - min)) / Math.log(10)) - 1;
         float unit = (float) Math.pow(10, order);
-        if(unit==0){
+        if (unit == 0) {
             return;
         }
         float unitRange = (max - min) / unit;
@@ -137,15 +139,15 @@ public class Renderer {
 
         float step = 0.5F;
         float unitGridSpacing = step;
-        int gridSpacing = (int) Math.ceil(pheight*unitRange/unitGridSpacing);
+        int gridSpacing = (int) Math.ceil(pheight * unitRange / unitGridSpacing);
         while (Math.abs(prevGridSpacing - DevConfig.optimalGridlineSpacing) >
                 Math.abs(gridSpacing - DevConfig.optimalGridlineSpacing)) {
-            unitGridSpacing+=step;
+            unitGridSpacing += step;
             prevGridSpacing = gridSpacing;
             gridSpacing = (int) (pheight / (unitRange / (unitGridSpacing)));
         }
-        unitGridSpacing-=step;
-        if(gridSpacing<DevConfig.optimalGridlineSpacing/2){
+        unitGridSpacing -= step;
+        if (gridSpacing < DevConfig.optimalGridlineSpacing / 2) {
             logger.info("Ass spacing");
         }
         float valueGridSpacing = ((float) unitGridSpacing * unit);
@@ -187,7 +189,7 @@ public class Renderer {
     }
 
     private static float nDecPlaces(float number, int n) {
-        return (float) (Math.round(number*Math.pow(10,n-1))/Math.pow(10,n-1));
+        return (float) (Math.round(number * Math.pow(10, n - 1)) / Math.pow(10, n - 1));
     }
 
     @Contract(pure = true)
@@ -284,7 +286,8 @@ public class Renderer {
     }
 
     public static void removeAnimation(Animation animation) {
-        animations.remove(animation);
+        synchronized (animations){
+        animations.remove(animation);}
     }
     //endregion
 

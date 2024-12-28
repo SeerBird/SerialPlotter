@@ -37,8 +37,8 @@ public class PortList extends RectElement {
         for (SerialPort port : Handler.getPorts()) {
             this.portButtons.add(new Button(x, topY, width, DevConfig.fontSize + DevConfig.vertMargin * 2,
                     () -> {
-                        Menu.addPortPlotGroup(port);
                         updatePorts(); // commodification?
+                        Menu.addPortPlotGroup(port);
                     }, port.getDescriptivePortName(), DevConfig.borders));
             topY += DevConfig.fontSize + DevConfig.vertMargin * 2;
         }
