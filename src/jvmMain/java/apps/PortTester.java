@@ -1,5 +1,8 @@
 package apps;
 
+import apps.ui.Menu;
+import apps.ui.rectangles.Plot;
+import apps.util.DevConfig;
 import com.fazecast.jSerialComm.*;
 import org.ejml.simple.SimpleMatrix;
 
@@ -11,37 +14,48 @@ import java.util.logging.Logger;
 
 public class PortTester {
     private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    private static final SimpleMatrix generator = new SimpleMatrix(new double[][]{{-1,2,0,1},
-            {-5,-8,3,2},
-            {-9,-1,-6,-6},
-            {5,2,-1,6}});
-    private static SimpleMatrix state = new SimpleMatrix(4,1);
+    private static final SimpleMatrix generator = new SimpleMatrix(new double[][]{{-1, 2, 0, 1},
+            {-5, -8, 3, 2},
+            {-9, -1, -6, -6},
+            {5, 2, -1, 6}});
+    private static SimpleMatrix state = new SimpleMatrix(4, 1);
 
     public static void start() {
-        state.set(0,200);
+        state.set(0, 200);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         SerialPort[] ports = SerialPort.getCommPorts();
-        scheduler.scheduleAtFixedRate(() -> {
-            SerialPort port = ports[1];
-            boolean res = port.openPort();
-            if (!res) {
-                //logger.info("Tester failed to open");
+        SerialPort port = ports[1];
+        port.openPort();
+        port.addDataListener(new SerialPortDataListener() {
+            @Override
+            public int getListeningEvents() {
+                return SerialPort.LISTENING_EVENT_DATA_AVAILABLE |
+                        SerialPort.LISTENING_EVENT_BREAK_INTERRUPT |
+                        SerialPort.LISTENING_EVENT_PORT_DISCONNECTED |
+                        SerialPort.LISTENING_EVENT_DATA_WRITTEN;
             }
+
+            @Override
+            public void serialEvent(SerialPortEvent event) {
+                if (event.getEventType() == SerialPort.LISTENING_EVENT_DATA_AVAILABLE) {
+                    byte[] buf = new byte[port.bytesAvailable()];
+                    int numRead = port.readBytes(buf, buf.length);
+                    String message = new String(buf, StandardCharsets.UTF_8);
+                    logger.info("Tester got '" + message + "'");
+                }
+            }
+        });
+        scheduler.scheduleAtFixedRate(() -> {
             SimpleMatrix delta = generator.mult(state).divide(1000);
             state = state.plus(delta);
-            String goo = String.valueOf(state.get(0,0));
-            String gaa = String.valueOf(state.get(1,0));
-            goo=goo.substring(0,goo.indexOf(".")+2);
-            gaa=gaa.substring(0,gaa.indexOf(".")+2);
-            byte[] buf = ("goo:"+ goo +",gaa:"+ gaa + ",gee:"+System.nanoTime()%3+",gao:"+ goo +",goa:"+ gaa + ",gea:"+System.nanoTime()%3+";").getBytes(StandardCharsets.UTF_8);
+            String goo = String.valueOf(state.get(0, 0));
+            String gaa = String.valueOf(state.get(1, 0));
+            goo = goo.substring(0, goo.indexOf(".") + 2);
+            gaa = gaa.substring(0, gaa.indexOf(".") + 2);
+            byte[] buf = ("goo:" + goo + ",gaa:" + gaa + ",gee:" + System.nanoTime() % 3 + ",gao:" + goo + ",goa:" + gaa + ",gea:" + System.nanoTime() % 3 + ";").getBytes(StandardCharsets.UTF_8);
             //byte[] buf = ("goo:"+ goo+";").getBytes(StandardCharsets.UTF_8);
 
             port.writeBytes(buf, buf.length);
-
-            res = port.closePort();
-            if (!res) {
-                //logger.info("Tester failed to close");
-            }
-        }, 8, 20, TimeUnit.MILLISECONDS);
+        }, 8, 200, TimeUnit.MILLISECONDS);
     }
 }

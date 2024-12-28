@@ -23,16 +23,18 @@ public class Menu {
             DevConfig.fontSize + DevConfig.vertMargin * 2, "",
             (String command) -> {
                 if (commandConsumer == null) {
-                    return; // maybe say smth?
+                    Menu.log("No port connected! I think.");
+                    return;
                 }
                 SerialPort port = commandConsumer.getPort();
                 if (!port.isOpen()) {
-                    return; // again, maybe say smth?
+                    Menu.log("Port closed.");
+                    return;
                 }
                 byte[] bytes = command.getBytes(StandardCharsets.UTF_8);
                 Thread task = new Thread(() -> {
                     int result = port.writeBytes(bytes, bytes.length);
-                    // maybe SAY SMTH..??
+                    Menu.log("Sent "+result+" bytes");
                 });
                 task.start();
             }, DevConfig.borders);
