@@ -99,8 +99,15 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                 String message = leftover+new String(buf, StandardCharsets.UTF_8);
                 leftover="";
                 //region read message
-                while (message.contains(";")) {
-                    String packet = message.substring(0, message.indexOf(";")); // a:n,b:m,...,z:k
+                while (true) {
+                    if(!message.contains("(")){
+                        return;
+                    }
+                    message = message.substring(message.indexOf("("));
+                    if(!message.contains(")")){
+                        break;
+                    }
+                    String packet = message.substring(1, message.indexOf(")")); // a:n,b:m,...,z:k
                     Menu.log(packet);
                     packet+=",";
                     if (!packet.contains(",")) {
