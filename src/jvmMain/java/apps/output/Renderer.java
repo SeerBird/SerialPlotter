@@ -105,14 +105,14 @@ public class Renderer {
         int pwidth = plot.width;
         int pheight = plot.height - plot.title.height;
         ArrayList<Float> values = plot.getValues();
-        float max = Float.MIN_VALUE;
+        float max = -Float.MAX_VALUE;
         float min = Float.MAX_VALUE;
-        for (int i = 0; i < values.size(); i++) {
-            if (values.get(i) < min) {
-                min = values.get(i);
+        for (Float value : values) {
+            if (value < min) {
+                min = value;
             }
-            if (values.get(i) > max) {
-                max = values.get(i);
+            if (value > max) {
+                max = value;
             }
         }
         if (max == min) {
