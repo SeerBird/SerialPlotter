@@ -3,6 +3,9 @@ import apps.PortTester
 
 fun main() {
     Handler.run()
-    PortTester.start()
+    //PortTester.start()
+}
+fun test(){
+
 }
 

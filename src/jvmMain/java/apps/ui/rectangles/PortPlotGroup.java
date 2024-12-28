@@ -105,7 +105,8 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                     packet+=",";
                     if (!packet.contains(",")) {
                         logger.info("Missing ',' before ';', what happened?");
-                        break;
+                        message = message.substring(message.indexOf(";")+1);
+                        continue; // discard this packet
                     }
                     //region read packet
                     while (packet.contains(",")) {
@@ -113,7 +114,8 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                         String pair = packet.substring(0, packet.indexOf(",")); //a:n
                         if (!pair.contains(":")) {
                             logger.info("Missing ':' before ',', what happened?");
-                            break;
+                            packet = packet.substring(packet.indexOf(",")+1);
+                            continue; //discard this pair
                         }
                         String key = pair.substring(0, pair.indexOf(":"));
                         String valueString = pair.substring(pair.indexOf(":") + 1);
@@ -122,7 +124,8 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                             value = Float.parseFloat(valueString);
                         } catch (NumberFormatException e) {
                             logger.info("Number format exception: "+valueString);
-                            return;
+                            packet = packet.substring(packet.indexOf(",")+1);
+                            continue; //discard this pair
                         }
                         //region put the value in the plots
                         if (plots.get(key) == null) {
@@ -141,12 +144,14 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                     }
                     if(!packet.isEmpty()){
                         logger.info("Leftovers of packet: "+packet);
+                        message = message.substring(message.indexOf(";")+1);
+                        continue; //discard this packet
                     }
                     //endregion
                     message = message.substring(message.indexOf(";")+1);
                 }
                 if(!message.isEmpty()){
-                    //leftover = message;
+                    leftover = message;
                     logger.info("Leftovers of message: "+message);
                 }
                 //endregion
