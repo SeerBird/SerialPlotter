@@ -34,21 +34,22 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
         if (!res) {
             logger.info("plotter failed to open");
             Menu.log("Failed to open port");
-        } else{
-            logger.info("Opened port "+port.getDescriptivePortName());
-            Menu.log("Opened port "+port.getDescriptivePortName());
+        } else {
+            logger.info("Opened port " + port.getDescriptivePortName());
+            Menu.log("Opened port " + port.getDescriptivePortName());
         }
         res = port.addDataListener(this);
         if (!res) {
             logger.info("plotter failed to listen");
             Menu.log("Failed to attach listener to port");
-        }else{
-            logger.info("Listening to "+port.getDescriptivePortName());
-            Menu.log("Listening to  "+port.getDescriptivePortName());
+        } else {
+            logger.info("Listening to " + port.getDescriptivePortName());
+            Menu.log("Listening to  " + port.getDescriptivePortName());
         }
         PortPlotGroup ref = this;
         close = new Button(x, y, width, height, () -> {
-            port.closePort();
+            Thread task = new Thread(port::closePort);
+            task.start();
             Menu.removePortPlotGroup(ref);
         }, "X", DevConfig.borders);
         Menu.setCommandConsumer(this);
@@ -96,23 +97,26 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                 lastReceivedTime = System.nanoTime();
                 byte[] buf = new byte[port.bytesAvailable()];
                 int numRead = port.readBytes(buf, buf.length);
-                String message = leftover+new String(buf, StandardCharsets.UTF_8);
-                leftover="";
+                String message = leftover + new String(buf, StandardCharsets.UTF_8);
+                leftover = "";
                 //region read message
                 while (true) {
-                    if(!message.contains("(")){
+                    if (!message.contains("(")) {
+                        if (!message.isEmpty()) {
+                            logger.info("Dropped message completely");
+                        }
                         return;
                     }
                     message = message.substring(message.indexOf("("));
-                    if(!message.contains(")")){
+                    if (!message.contains(")")) {
                         break;
                     }
                     String packet = message.substring(1, message.indexOf(")")); // a:n,b:m,...,z:k
                     Menu.log(packet);
-                    packet+=",";
+                    packet += ",";
                     if (!packet.contains(",")) {
                         logger.info("Missing ',' before ';', what happened?");
-                        message = message.substring(message.indexOf(";")+1);
+                        message = message.substring(message.indexOf(")") + 1);
                         continue; // discard this packet
                     }
                     //region read packet
@@ -121,7 +125,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                         String pair = packet.substring(0, packet.indexOf(",")); //a:n
                         if (!pair.contains(":")) {
                             logger.info("Missing ':' before ',', what happened?");
-                            packet = packet.substring(packet.indexOf(",")+1);
+                            packet = packet.substring(packet.indexOf(",") + 1);
                             continue; //discard this pair
                         }
                         String key = pair.substring(0, pair.indexOf(":"));
@@ -130,8 +134,8 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                         try {
                             value = Float.parseFloat(valueString);
                         } catch (NumberFormatException e) {
-                            logger.info("Number format exception: "+valueString);
-                            packet = packet.substring(packet.indexOf(",")+1);
+                            logger.info("Number format exception: " + valueString);
+                            packet = packet.substring(packet.indexOf(",") + 1);
                             continue; //discard this pair
                         }
                         //region put the value in the plots
@@ -147,19 +151,19 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                         }
                         //endregion
                         //endregion
-                        packet = packet.substring(packet.indexOf(",")+1);
+                        packet = packet.substring(packet.indexOf(",") + 1);
                     }
-                    if(!packet.isEmpty()){
-                        logger.info("Leftovers of packet: "+packet);
-                        message = message.substring(message.indexOf(";")+1);
+                    if (!packet.isEmpty()) {
+                        logger.info("Leftovers of packet: " + packet);
+                        message = message.substring(message.indexOf(";") + 1);
                         continue; //discard this packet
                     }
                     //endregion
-                    message = message.substring(message.indexOf(";")+1);
+                    message = message.substring(message.indexOf(")") + 1);
                 }
-                if(!message.isEmpty()){
+                if (!message.isEmpty()) {
                     leftover = message;
-                    logger.info("Leftovers of message: "+message);
+                    logger.info("Leftovers of message: " + message);
                 }
                 //endregion
                 Handler.repaint();

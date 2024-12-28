@@ -117,6 +117,8 @@ public class Renderer {
         }
         if (max == min) {
             //logger.info("Only one value?");
+            drawLabel(plot.title);
+            drawTextbox(plot.range);
             return; // nah you can figure out what the value is if it's only one. get out.
         }
         for (int i = 0; i < values.size() - 1; i++) {

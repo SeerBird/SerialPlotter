@@ -20,24 +20,8 @@ public class Menu {
     private static final TextArea log = new TextArea(0, 0, 100, 100);
     private static PortPlotGroup commandConsumer; // it's a plot in case I want to show stuff
     private static final Textbox commandLine = new Textbox(0, 0, 100,
-            DevConfig.fontSize + DevConfig.vertMargin * 2, "",
-            (String command) -> {
-                if (commandConsumer == null) {
-                    Menu.log("No port connected! I think.");
-                    return;
-                }
-                SerialPort port = commandConsumer.getPort();
-                if (!port.isOpen()) {
-                    Menu.log("Port closed.");
-                    return;
-                }
-                byte[] bytes = command.getBytes(StandardCharsets.UTF_8);
-                Thread task = new Thread(() -> {
-                    int result = port.writeBytes(bytes, bytes.length);
-                    Menu.log("Sent "+result+" bytes");
-                });
-                task.start();
-            }, DevConfig.borders);
+            DevConfig.fontSize + DevConfig.vertMargin * 2, "", Menu::sendCommand,
+            DevConfig.borders);
     //endregion
     private static final HashMap<ProgramState, ArrayList<IElement>> menuPresets = new HashMap<>();
     private static IElement pressed;
@@ -84,6 +68,25 @@ public class Menu {
         plotContainer.height = height;
         //endregion
         plotContainer.arrange();
+    }
+
+    private static void sendCommand(String command) {
+        if (commandConsumer == null) {
+            Menu.log("No port connected! I think.");
+            return;
+        }
+        SerialPort port = commandConsumer.getPort();
+        if (!port.isOpen()) {
+            Menu.log("Port closed.");
+            return;
+        }
+        byte[] bytes = command.getBytes(StandardCharsets.UTF_8);
+        Thread task = new Thread(() -> {
+            int result = port.writeBytes(bytes, bytes.length);
+            Menu.log("Sent " + result + " bytes");
+        });
+        task.start();
+        commandLine.currentDefaultText = "";
     }
 
     public static void refreshMenuState() {

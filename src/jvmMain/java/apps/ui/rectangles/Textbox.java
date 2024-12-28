@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 public class Textbox extends Label implements Focusable {
     final String defaultText;
     Consumer<String> action;
-    String currentDefaultText;
+    public String currentDefaultText;
     public boolean cursor;
     ScheduledFuture cursorAnimation;
 

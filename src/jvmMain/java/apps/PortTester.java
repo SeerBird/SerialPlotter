@@ -42,6 +42,8 @@ public class PortTester {
                     int numRead = port.readBytes(buf, buf.length);
                     String message = new String(buf, StandardCharsets.UTF_8);
                     logger.info("Tester got '" + message + "'");
+                    buf = ("(gay:"+ System.nanoTime() % 3 + ")").getBytes(StandardCharsets.UTF_8);
+                    port.writeBytes(buf, buf.length);
                 }
             }
         });
@@ -56,6 +58,6 @@ public class PortTester {
             //byte[] buf = ("goo:"+ goo+";").getBytes(StandardCharsets.UTF_8);
 
             port.writeBytes(buf, buf.length);
-        }, 8, 200, TimeUnit.MILLISECONDS);
+        }, 8, 20, TimeUnit.MILLISECONDS);
     }
 }
