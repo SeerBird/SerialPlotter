@@ -25,6 +25,7 @@ public class PortTester {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         SerialPort[] ports = SerialPort.getCommPorts();
         SerialPort port = ports[1];
+        port.setBaudRate(20000);
         port.openPort();
         port.addDataListener(new SerialPortDataListener() {
             @Override
@@ -57,6 +58,6 @@ public class PortTester {
             //byte[] buf = ("goo:"+ goo+";").getBytes(StandardCharsets.UTF_8);
 
             port.writeBytes(buf, buf.length);
-        }, 8, 100, TimeUnit.MILLISECONDS);
+        }, 8, 10, TimeUnit.MILLISECONDS);
     }
 }

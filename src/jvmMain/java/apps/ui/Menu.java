@@ -65,7 +65,8 @@ public class Menu {
         if (portList.height > height) {
             commandLine.text = "Stop contorting the window!";
         }
-        log.height = Math.max(0, height - commandLine.height);
+        log.y = portList.height;
+        log.height = Math.max(0, height - commandLine.height- portList.height);
         commandLine.y = height - commandLine.height;
         plotContainer.height = height;
         //endregion

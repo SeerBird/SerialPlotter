@@ -250,28 +250,42 @@ public class Renderer {
             return;
         }
         int topy = area.y + area.height;
-        int displayedEntryCount = 0;
-        for (int i = entries.size() - 1 - area.shiftFromBottom; i > -1; i--) {
-            g.setColor(DevConfig.borders);
+        int maxHorShift = area.shiftLeft;
+        for (int i = entries.size() - 1 - area.shiftUp; i > -1; i--) {
+            topy -= g.getFontMetrics().getHeight();
+            if (topy < area.y) {
+                break;
+            }
+            String entry = entries.get(i);
+            if(entry.length()<=1){
+                maxHorShift = 0;
+                break;
+            }
+            maxHorShift = Math.min(maxHorShift,maxHorShift+
+                    g.getFontMetrics().stringWidth(entry.substring(0,entry.length()-1))- area.shiftLeft);
+        }
+        area.limitHorShift(maxHorShift);
+        g.setColor(DevConfig.borders);
+        topy = area.y + area.height; // reset topy
+        for (int i = entries.size() - 1 - area.shiftUp; i > -1; i--) {
             topy -= g.getFontMetrics().getHeight();
             if (topy < area.y) {
                 break;
             }
             String entry = entries.get(i);
             //region shorten entry to make it fit, adding ... if shortening was needed
-            if (g.getFontMetrics().stringWidth(entry) > area.width) {
-                entry = truncateString(entry, area.width);
+            if (g.getFontMetrics().stringWidth(entry) > area.width + maxHorShift) {
+                entry = truncateString(entry, area.width + maxHorShift);
             }
-            g.drawString(entry, area.x, topy);
-            displayedEntryCount++;
+            g.drawString(entry, area.x-maxHorShift, topy);
             //endregion
         }
-        int pos = area.shiftFromBottom;
-        float proportion = ((float) ((entries.size() + 1) - area.shiftFromBottom)) / (entries.size() + 1);
+        //region slider
+        float proportion = ((float) ((entries.size()) - area.shiftUp)) / (entries.size() + 1);
         int size = area.height;
         if (!entries.isEmpty()) {
             size = Math.min(area.height, Math.max(DevConfig.minSliderLength,
-                    (displayedEntryCount * area.height) / (entries.size())));
+                    (area.height/ g.getFontMetrics().getHeight()* area.height) / (entries.size())));
         }
         int middle = (int) (area.y + (area.height-size) * proportion)+size/2;
         int top = middle - (size + 1) / 2;
@@ -288,6 +302,7 @@ public class Renderer {
         g.setColor(DevConfig.sliderColor);
         int width = Math.min(DevConfig.maxSliderWidth, area.width / 8);
         g.fillRect(area.x + area.width - width, top, width, (bot - top));
+        //endregion
     }
 
     private static void drawLabelText(@NotNull Label label, Color color) {

@@ -150,4 +150,7 @@ public class InputControl extends MouseAdapter implements KeyListener {
             return Right;
         }
     }
+    public static boolean getShift(){
+        return Shift;
+    }
 }
