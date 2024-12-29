@@ -16,6 +16,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -83,7 +86,6 @@ public class Renderer {
                 logger.info("Encountered an IElement I did not anticipate. How?");
             }
         }
-
     }
 
     private static void drawPlotContainer(PlotContainer e) {
@@ -101,31 +103,43 @@ public class Renderer {
     private static void drawPlot(@NotNull Plot plot) {
         //logger.info("Started a plot");
         drawRect(plot, DevConfig.borders);
-        //region draw plot line segments between data points
+
         int pwidth = plot.width;
         int pheight = plot.height - plot.title.height;
-        ArrayList<Float> values = plot.getValues();
+        HashMap<String, ArrayList<Float>> dataSets = plot.getDataSets();
+        //region find minimum and maximum value
         float max = -Float.MAX_VALUE;
         float min = Float.MAX_VALUE;
-        for (Float value : values) {
-            if (value < min) {
-                min = value;
-            }
-            if (value > max) {
-                max = value;
+        boolean atLeastOneValue = false;
+        for (ArrayList<Float> dataSet : dataSets.values()) {
+            for (Float value : dataSet) {
+                atLeastOneValue = true;
+                if (value < min) {
+                    min = value;
+                }
+                if (value > max) {
+                    max = value;
+                }
             }
         }
-        if (max == min) {
+        //endregion
+        if (max == min||!atLeastOneValue) {
             //logger.info("Only one value?");
             drawLabel(plot.title);
             drawTextbox(plot.range);
             return; // nah you can figure out what the value is if it's only one. get out.
         }
-        for (int i = 0; i < values.size() - 1; i++) {
-            g.drawLine(Math.round(plot.x + ((float) (i * pwidth)) / (float) values.size()),
-                    plotYFromValue(plot, min, max, values.get(i)),
-                    Math.round(plot.x + ((float) ((i + 1) * pwidth)) / (float) values.size()),
-                    plotYFromValue(plot, min, max, values.get(i + 1)));
+        ArrayList<String> dataSetNames = new ArrayList<>(dataSets.keySet());
+        Collections.sort(dataSetNames);
+        //region draw plot line segments between data points
+        for (String plotName : dataSetNames) {
+            ArrayList<Float> dataSet = dataSets.get(plotName);
+            for (int i = 0; i < dataSet.size() - 1; i++) {
+                g.drawLine(Math.round(plot.x + ((float) (i * pwidth)) / (float) dataSet.size()),
+                        plotYFromValue(plot, min, max, dataSet.get(i)),
+                        Math.round(plot.x + ((float) ((i + 1) * pwidth)) / (float) dataSet.size()),
+                        plotYFromValue(plot, min, max, dataSet.get(i + 1)));
+            }
         }
         //endregion
         //region grid
@@ -257,12 +271,12 @@ public class Renderer {
                 break;
             }
             String entry = entries.get(i);
-            if(entry.length()<=1){
+            if (entry.length() <= 1) {
                 maxHorShift = 0;
                 break;
             }
-            maxHorShift = Math.min(maxHorShift,maxHorShift+
-                    g.getFontMetrics().stringWidth(entry.substring(0,entry.length()-1))- area.shiftLeft);
+            maxHorShift = Math.min(maxHorShift, maxHorShift +
+                    g.getFontMetrics().stringWidth(entry.substring(0, entry.length() - 1)) - area.shiftLeft);
         }
         area.limitHorShift(maxHorShift);
         g.setColor(DevConfig.borders);
@@ -277,7 +291,7 @@ public class Renderer {
             if (g.getFontMetrics().stringWidth(entry) > area.width + maxHorShift) {
                 entry = truncateString(entry, area.width + maxHorShift);
             }
-            g.drawString(entry, area.x-maxHorShift, topy);
+            g.drawString(entry, area.x - maxHorShift, topy);
             //endregion
         }
         //region slider
@@ -285,9 +299,9 @@ public class Renderer {
         int size = area.height;
         if (!entries.isEmpty()) {
             size = Math.min(area.height, Math.max(DevConfig.minSliderLength,
-                    (area.height/ g.getFontMetrics().getHeight()* area.height) / (entries.size())));
+                    (area.height / g.getFontMetrics().getHeight() * area.height) / (entries.size())));
         }
-        int middle = (int) (area.y + (area.height-size) * proportion)+size/2;
+        int middle = (int) (area.y + (area.height - size) * proportion) + size / 2;
         int top = middle - (size + 1) / 2;
         int bot = middle + (size + 1) / 2;
         int shift = 0; //down

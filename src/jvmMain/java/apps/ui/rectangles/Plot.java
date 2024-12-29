@@ -5,12 +5,14 @@ import apps.output.audio.Sound;
 import apps.util.DevConfig;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Plot extends RectElement {
     RectElement pressed;
     public Textbox range;
     public Label title;
-    ArrayList<Float> values;
+    HashMap<String, ArrayList<Float>> dataSets;
+    HashMap<String, ArrayList<Float>> newDataSets;
     int rangeN = DevConfig.defaultRange;
 
     public Plot(int x, int y, int width, int height, String title) {
@@ -22,8 +24,9 @@ public class Plot extends RectElement {
                 Audio.playSound(Sound.stopPls);
             }
         }, DevConfig.borders);
-        values = new ArrayList<>();
-        this.title = new Label(x,y,width/2,height,"E0;"+title,DevConfig.borders);
+        dataSets = new HashMap<>();
+        newDataSets = new HashMap<>();
+        this.title = new Label(x, y, width / 2, height, "E0;" + title, DevConfig.borders);
     }
 
 
@@ -45,18 +48,29 @@ public class Plot extends RectElement {
         pressed = null;
     }
 
-    public void addValue(float value) {
-        values.add(value);
-        while (values.size() > rangeN) {
-            values.remove(0); // this feels bad computationally. I'm sure it's fine though.
+    public void addValue(String key, float value) {
+        ArrayList<Float> dataSet = dataSets.get(key);
+        //region create data set if absent
+        if (dataSet == null) {
+            dataSet = newDataSets.get(key);
+            if (dataSet == null) {
+                dataSet = new ArrayList<>();
+                newDataSets.put(key, dataSet);
+            }
         }
+        //endregion
+        dataSet.add(value);
     }
 
-    public ArrayList<Float> getValues() {
-        return values;
+    public HashMap<String, ArrayList<Float>> getDataSets() {
+        return dataSets;
     }
 
-    public void arrange() {
+    public void update() {
+        for(String dataSetName:newDataSets.keySet()){
+            dataSets.put(dataSetName,newDataSets.get(dataSetName));
+        }
+        newDataSets.clear();
         title.width = width / 2;
         range.width = width / 2;
         title.height = DevConfig.fontSize + DevConfig.vertMargin * 2;

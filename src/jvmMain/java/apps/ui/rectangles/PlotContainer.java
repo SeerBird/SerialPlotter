@@ -65,7 +65,7 @@ public class PlotContainer extends RectElement {
         return pressed;
     }
 
-    public void arrange() {
+    public void update() {
         //try to make the tiling match the width and height we have?
         if (portPlotGroups.isEmpty()) {
             return;
@@ -103,7 +103,7 @@ public class PlotContainer extends RectElement {
             plot.y = y + j * plotHeight;
             plot.width = plotWidth;
             plot.height = plotHeight;
-            plot.arrange();
+            plot.update();
         }
         //endregion
         //region amogi

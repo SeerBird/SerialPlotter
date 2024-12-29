@@ -19,6 +19,8 @@ public class PortTester {
             {-9, -1, -6, -6},
             {5, 2, -1, 6}});
     private static SimpleMatrix state = new SimpleMatrix(4, 1);
+    private static Float time = 0F;
+    private static final Float dt = 0.01F;
 
     public static void start() {
         state.set(0, 200);
@@ -52,9 +54,12 @@ public class PortTester {
             state = state.plus(delta);
             String goo = String.valueOf(state.get(0, 0));
             String gaa = String.valueOf(state.get(1, 0));
-            goo = goo.substring(0, goo.indexOf(".") + 2);
-            gaa = gaa.substring(0, gaa.indexOf(".") + 2);
-            byte[] buf = ("{kill(goo:" + goo + ",gaa:" + gaa + ",gee:" + System.nanoTime() % 3 + ",gao:" + goo + ",goa:" + gaa + ",gea:" + System.nanoTime() % 3 + ")}").getBytes(StandardCharsets.UTF_8);
+            time=(time+dt)%200;
+            goo = String.valueOf(160*Math.sin(time));
+            gaa = String.valueOf(200*Math.sin(0.5*time+3));
+            goo = goo.substring(0, goo.indexOf(".") + 3);
+            gaa = gaa.substring(0, gaa.indexOf(".") + 3);
+            byte[] buf = ("{kill(goo:" + goo + ",gaa:" + gaa +")}").getBytes(StandardCharsets.UTF_8);
             //byte[] buf = ("goo:"+ goo+";").getBytes(StandardCharsets.UTF_8);
 
             port.writeBytes(buf, buf.length);

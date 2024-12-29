@@ -102,6 +102,17 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                             break;
                         }
                         String plotName = packet.substring(0, packet.indexOf("(")); // is "" an ok plot name? prolly.
+                        Plot plot = plots.get(plotName);
+                        //region create plot if absent
+                        if(plot==null){
+                            plot = newPlots.get(plotName);
+                            if(plot==null){
+                                plot = new Plot(0,0,width,height,plotName);
+                                newPlots.put(plotName,plot);
+                                plotAdded = true;
+                            }
+                        }
+                        //endregion
                         packet = packet.substring(packet.indexOf("("));
                         if (!packet.contains(")")) {
                             logger.info("Unclosed (: " + plotName + packet);
@@ -131,17 +142,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                                 continue; //discard this pair
                             }
                             //endregion
-                            //region put the value in the plots
-                            if (plots.get(key) == null) {
-                                newPlots.put(key, new Plot(0, 0, width, height, key));
-                                newPlots.get(key).addValue(value);
-                                plotAdded=true;
-                            } else {
-                                Plot plot = plots.get(key);
-                                plot.addValue(value);
-                            }
-                            //endregion
-
+                            plot.addValue(key,value);
                         }
                         if (!plotData.isEmpty()) {
                             Menu.log("Leftovers in plot data: " + plotData);

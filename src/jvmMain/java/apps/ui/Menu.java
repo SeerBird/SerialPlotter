@@ -41,7 +41,7 @@ public class Menu {
     }
 
     //region Update Contents
-    public static void update() {
+    public static synchronized void update() {
         //region resize and arrange everything
         int width = Handler.getWindow().getWidth();
         int height = Handler.getWindow().getHeight();
@@ -70,7 +70,7 @@ public class Menu {
         commandLine.y = height - commandLine.height;
         plotContainer.height = height;
         //endregion
-        plotContainer.arrange();
+        plotContainer.update();
     }
 
     private static void sendCommand(String command) {
