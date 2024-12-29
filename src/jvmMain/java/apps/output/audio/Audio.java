@@ -20,7 +20,7 @@ public class Audio {
     static Clip silent;
     static final Map<Sound, Clip> cooldownSounds = new HashMap<>();
 
-    static {
+    public static void start(){
         try {
             silent = AudioSystem.getClip();
         } catch (LineUnavailableException e) {

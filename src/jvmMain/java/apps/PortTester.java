@@ -20,14 +20,14 @@ public class PortTester {
             {5, 2, -1, 6}});
     private static SimpleMatrix state = new SimpleMatrix(4, 1);
     private static Float time = 0F;
-    private static final Float dt = 0.01F;
+    private static final Float dt = 0.1F;
 
     public static void start() {
         state.set(0, 200);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         SerialPort[] ports = SerialPort.getCommPorts();
         SerialPort port = ports[1];
-        port.setBaudRate(20000);
+        port.setBaudRate(115200);
         port.openPort();
         port.addDataListener(new SerialPortDataListener() {
             @Override
@@ -37,6 +37,7 @@ public class PortTester {
                         SerialPort.LISTENING_EVENT_PORT_DISCONNECTED |
                         SerialPort.LISTENING_EVENT_DATA_WRITTEN;
             }
+
             @Override
             public void serialEvent(SerialPortEvent event) {
                 if (event.getEventType() == SerialPort.LISTENING_EVENT_DATA_AVAILABLE) {
@@ -44,7 +45,7 @@ public class PortTester {
                     int numRead = port.readBytes(buf, buf.length);
                     String message = new String(buf, StandardCharsets.UTF_8);
                     logger.info("Tester got '" + message + "'");
-                    buf = ("(gaoo:"+ System.nanoTime() % 3 + ")").getBytes(StandardCharsets.UTF_8);
+                    buf = ("(gaoo:" + System.nanoTime() % 3 + ")").getBytes(StandardCharsets.UTF_8);
                     port.writeBytes(buf, buf.length);
                 }
             }
@@ -54,12 +55,20 @@ public class PortTester {
             state = state.plus(delta);
             String goo = String.valueOf(state.get(0, 0));
             String gaa = String.valueOf(state.get(1, 0));
-            time=(time+dt)%200;
-            goo = String.valueOf(160*Math.sin(time));
-            gaa = String.valueOf(200*Math.sin(0.5*time+3));
+            String gee;
+            time = (time + dt) % 200;
+            goo = String.valueOf(160 * Math.sin(time));
+            gaa = String.valueOf(200 * Math.sin(0.5 * time + 3));
+            gee = String.valueOf(130 * Math.sin(2 * time + 3));
             goo = goo.substring(0, goo.indexOf(".") + 3);
             gaa = gaa.substring(0, gaa.indexOf(".") + 3);
-            byte[] buf = ("{kill(goo:" + goo + ",gaa:" + gaa +")}").getBytes(StandardCharsets.UTF_8);
+            gee = gee.substring(0, gee.indexOf(".") + 3);
+            byte[] buf = (
+                    "{" +
+                            "awawawawawawawawawawawawawawa(goo:" + goo + ",gaa:" + gaa + ")" +
+                            "murderrr(KILLMEALREADYPLEASE:"+goo+",hmm:"+gaa+",okNowStopCodingPlease:"+gee+")"+
+                            "}"
+            ).getBytes(StandardCharsets.UTF_8);
             //byte[] buf = ("goo:"+ goo+";").getBytes(StandardCharsets.UTF_8);
 
             port.writeBytes(buf, buf.length);

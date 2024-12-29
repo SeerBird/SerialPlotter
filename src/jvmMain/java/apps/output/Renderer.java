@@ -71,11 +71,7 @@ public class Renderer {
     private static void drawMenu() {
         for (IElement e : Menu.getElements()) {
             if (e instanceof PortList) {
-                g.setColor(DevConfig.BACKGROUND);
-                g.fillRect(e.x, e.y, ((PortList) e).width, ((PortList) e).height);
-                for (Button port : ((PortList) e).portButtons) {
-                    drawButton(port);
-                }
+                drawPortList((PortList) e);
             } else if (e instanceof TextArea) {
                 drawTextArea((TextArea) e);
             } else if (e instanceof Textbox) {
@@ -88,22 +84,9 @@ public class Renderer {
         }
     }
 
-    private static void drawPlotContainer(PlotContainer e) {
-        if (!e.getPortPlotGroups().isEmpty()) {
-            PortPlotGroup port = e.getPortPlotGroups().get(0);
-            for (Plot plot : port.getPlots().values()) {
-                drawPlot(plot);
-            }
-            g.setColor(DevConfig.BACKGROUND);
-            g.fillRect(port.closeButton.x, port.closeButton.y, port.closeButton.width, port.closeButton.height);
-            drawButton(port.closeButton);
-        }
-    }
-
+    //region draw elements
     private static void drawPlot(@NotNull Plot plot) {
-        //logger.info("Started a plot");
         drawRect(plot, DevConfig.borders);
-
         int pwidth = plot.width;
         int pheight = plot.height - plot.title.height;
         HashMap<String, ArrayList<Float>> dataSets = plot.getDataSets();
@@ -123,22 +106,25 @@ public class Renderer {
             }
         }
         //endregion
-        if (max == min||!atLeastOneValue) {
+        //region don't draw the values if there are no values, duh
+        if (max == min || !atLeastOneValue) {
             //logger.info("Only one value?");
             drawLabel(plot.title);
             drawTextbox(plot.range);
             return; // nah you can figure out what the value is if it's only one. get out.
         }
+        //endregion
         ArrayList<String> dataSetNames = new ArrayList<>(dataSets.keySet());
         Collections.sort(dataSetNames);
         //region draw plot line segments between data points
-        for (String plotName : dataSetNames) {
-            ArrayList<Float> dataSet = dataSets.get(plotName);
-            for (int i = 0; i < dataSet.size() - 1; i++) {
-                g.drawLine(Math.round(plot.x + ((float) (i * pwidth)) / (float) dataSet.size()),
-                        plotYFromValue(plot, min, max, dataSet.get(i)),
-                        Math.round(plot.x + ((float) ((i + 1) * pwidth)) / (float) dataSet.size()),
-                        plotYFromValue(plot, min, max, dataSet.get(i + 1)));
+        for (int i = 0; i < DevConfig.plotColors.size() && i < dataSetNames.size(); i++) { // no colors left? no plot for you.
+            g.setColor(DevConfig.plotColors.get(i));
+            ArrayList<Float> dataSet = dataSets.get(dataSetNames.get(i));
+            for (int n = 0; n < dataSet.size() - 1; n++) {
+                g.drawLine(Math.round(plot.x + ((float) (n * pwidth)) / (float) dataSet.size()),
+                        plotYFromValue(plot, min, max, dataSet.get(n)),
+                        Math.round(plot.x + ((float) ((n + 1) * pwidth)) / (float) dataSet.size()),
+                        plotYFromValue(plot, min, max, dataSet.get(n + 1)));
             }
         }
         //endregion
@@ -149,7 +135,7 @@ public class Renderer {
             return;
         }
         float unitRange = (max - min) / unit;
-        g.setColor(DevConfig.gridColor);
+        g.setColor(DevConfig.text);
         //region get valueGridSpacing
         int prevGridSpacing = Integer.MIN_VALUE;
 
@@ -197,23 +183,45 @@ public class Renderer {
         //endregion
         //endregion
         String title = plot.title.text;
-        title = "E" + order + ";" + title.substring(title.indexOf(";") + 1); // is this thread-safe? prolly not.
+        title = "E" + order + ":" + title.substring(title.indexOf(":") + 1); // is this thread-safe? prolly not.
         plot.title.text = title;
         drawLabel(plot.title);
         drawTextbox(plot.range);
-        //logger.info("Finished a plot");
+        //region legend. is this really enough?
+        int topy = plot.y+DevConfig.fontSize;
+        int x = plot.x + plot.title.width + plot.range.width + DevConfig.labelHorMargin;
+        int legendWidth = plot.width - plot.title.width - plot.range.width;
+        for (int i = 0; i < DevConfig.plotColors.size() && i < dataSetNames.size(); i++) {
+            g.setColor(DevConfig.plotColors.get(i));
+            g.drawString(truncateString(dataSetNames.get(i),legendWidth),x,topy);
+            topy+=DevConfig.fontSize;
+            if(topy>plot.y+plot.height){
+                break;
+            }
+        }
+        //endregion
     }
 
-    private static float nDecPlaces(float number, int n) {
-        return (float) (Math.round(number * Math.pow(10, n - 1)) / Math.pow(10, n - 1));
+    private static void drawPortList(@NotNull PortList portList) {
+        g.setColor(DevConfig.BACKGROUND);
+        g.fillRect(portList.x, portList.y, (portList).width, portList.height);
+        for (Button port : portList.portButtons) {
+            drawButton(port);
+        }
     }
 
-    @Contract(pure = true)
-    private static int plotYFromValue(@NotNull Plot plot, float min, float max, float value) {
-        return Math.round(plot.y + plot.height - (plot.height - plot.title.height) * (value - min) / (max - min));
+    private static void drawPlotContainer(@NotNull PlotContainer e) {
+        if (!e.getPortPlotGroups().isEmpty()) {
+            PortPlotGroup port = e.getPortPlotGroups().get(0);
+            for (Plot plot : port.getPlots().values()) {
+                drawPlot(plot);
+            }
+            g.setColor(DevConfig.BACKGROUND);
+            g.fillRect(port.closeButton.x, port.closeButton.y, port.closeButton.width, port.closeButton.height);
+            drawButton(port.closeButton);
+        }
     }
 
-    //region draw elements
     private static void drawRect(@NotNull RectElement e, Color color) {
         g.setColor(color);
         g.drawRect(e.x, e.y, e.width, e.height);
@@ -332,6 +340,14 @@ public class Renderer {
     }
 
     //endregion
+    private static float nDecPlaces(float number, int n) {
+        return (float) (Math.round(number * Math.pow(10, n - 1)) / Math.pow(10, n - 1));
+    }
+
+    @Contract(pure = true)
+    private static int plotYFromValue(@NotNull Plot plot, float min, float max, float value) {
+        return Math.round(plot.y + plot.height - (plot.height - plot.title.height) * (value - min) / (max - min));
+    }
     //endregion
 
     //region Animations
@@ -364,6 +380,9 @@ public class Renderer {
     @NotNull
     private static String truncateString(String string, int length) {
         String entry = string;
+        if(getStringWidth(entry)<length){
+            return entry;
+        }
         do {
             if (entry.length() <= 1) {
                 return "";

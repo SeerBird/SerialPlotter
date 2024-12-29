@@ -1,5 +1,6 @@
 package apps.ui.rectangles;
 
+import apps.Handler;
 import apps.output.audio.Audio;
 import apps.output.audio.Sound;
 import apps.util.DevConfig;
@@ -26,10 +27,10 @@ public class Plot extends RectElement {
         }, DevConfig.borders);
         dataSets = new HashMap<>();
         newDataSets = new HashMap<>();
-        this.title = new Label(x, y, width / 2, height, "E0;" + title, DevConfig.borders);
+        this.title = new Label(x, y, width / 2, height, "E0:" + title, DevConfig.borders);
     }
 
-
+    //region Input
     @Override
     public boolean press(double x, double y) {
         if (range.press(x, y)) {
@@ -48,6 +49,7 @@ public class Plot extends RectElement {
         pressed = null;
     }
 
+    //endregion
     public void addValue(String key, float value) {
         ArrayList<Float> dataSet = dataSets.get(key);
         //region create data set if absent
@@ -60,6 +62,9 @@ public class Plot extends RectElement {
         }
         //endregion
         dataSet.add(value);
+        while (dataSet.size() > rangeN) {
+            dataSet.remove(0);
+        }
     }
 
     public HashMap<String, ArrayList<Float>> getDataSets() {
@@ -67,17 +72,24 @@ public class Plot extends RectElement {
     }
 
     public void update() {
-        for(String dataSetName:newDataSets.keySet()){
-            dataSets.put(dataSetName,newDataSets.get(dataSetName));
+        for (String dataSetName : newDataSets.keySet()) {
+            dataSets.put(dataSetName, newDataSets.get(dataSetName));
         }
         newDataSets.clear();
-        title.width = width / 2;
-        range.width = width / 2;
+
+        int legendWidth = 0;
+        for (String dataSetName : dataSets.keySet()) {
+            legendWidth = Math.max(legendWidth, Handler.stringLength(dataSetName)+2*DevConfig.labelHorMargin);
+        }
+        legendWidth = Math.min(legendWidth,width/3);
+        int remainingWidth = width-legendWidth;
+        title.width = remainingWidth*2 / 3;
+        range.width = remainingWidth / 3;
         title.height = DevConfig.fontSize + DevConfig.vertMargin * 2;
         range.height = DevConfig.fontSize + DevConfig.vertMargin * 2;
         title.x = x;
         title.y = y;
-        range.x = x + width / 2;
+        range.x = x + title.width;
         range.y = y;
     }
 }

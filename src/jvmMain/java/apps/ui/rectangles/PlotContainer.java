@@ -21,6 +21,7 @@ public class PlotContainer extends RectElement {
         amogi = new ArrayList<>();
     }
 
+    //region Input
     @Override
     public void release() {
         if (pressed == null) {
@@ -40,6 +41,7 @@ public class PlotContainer extends RectElement {
         }
         return false;
     }
+    //endregion
 
     public void addPortPlotGroup(SerialPort port) { // turns out there will only be one. who needs to change code, right?
         if (portPlotGroups.size() == 1) {
@@ -74,7 +76,7 @@ public class PlotContainer extends RectElement {
         Button close = port.closeButton;
         close.width = 40;
         close.height = 40;
-        close.x = x + width - close.width;
+        close.x = x;
         close.y = y;
         port.refresh();
         ArrayList<Plot> plots = new ArrayList<>(port.plots.values());

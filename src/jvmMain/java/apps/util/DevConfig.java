@@ -1,6 +1,8 @@
 package apps.util;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DevConfig {
     public static final int DWIDTH = 1280;
@@ -8,11 +10,16 @@ public class DevConfig {
     public static final int maxLogSize = 10000;
     public static final int maxPlotEntries = 1000; // should be >=defaultRange
     //region colors
-    public static Color BACKGROUND = new Color(31, 0, 136, 255);
+    public static Color BACKGROUND = new Color(31, 23, 68, 255);
     public static Color borders = new Color(255, 166, 0, 255);
     public static Color text = new Color(255, 166, 0, 255);
-    public static Color gridColor = new Color(200, 40, 70, 255);
+    public static Color gridColor = new Color(154, 206, 183, 255);
     public static Color sliderColor = new Color(200, 40, 70, 255);
+    private static final Color plotColor1 = new Color(0, 210, 218, 255);
+    private static final Color plotColor2 = new Color(101, 194, 3, 255);
+    private static final Color plotColor3 = new Color(255, 0, 140, 255);
+    private static final Color plotColor4 = new Color(253, 210, 53, 255);
+    public static ArrayList<Color> plotColors = new ArrayList<>(List.of(new Color[]{plotColor1, plotColor2, plotColor3, plotColor4}));
     //endregion
     //region animations and effects
     public static double shakeDecay = 0.9;

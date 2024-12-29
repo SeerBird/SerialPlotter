@@ -3,6 +3,7 @@ package apps;
 import apps.input.InputInfo;
 import apps.output.AppWindow;
 import apps.output.Renderer;
+import apps.output.audio.Audio;
 import apps.ui.Menu;
 import apps.util.GFormatter;
 import com.fazecast.jSerialComm.*;
@@ -50,8 +51,8 @@ public class Handler {
         //endregion
     }
     private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    static final AppWindow window = new AppWindow();
     private static ProgramState state;
+    static final AppWindow window = new AppWindow();
     static final InputInfo input = new InputInfo();
     private final static Thread onShutdown = new Thread(()->{
 
@@ -61,6 +62,7 @@ public class Handler {
         Runtime.getRuntime().addShutdownHook(onShutdown);
         state = ProgramState.main;
         //region Set starting state
+        Audio.start();
         Menu.start();
         Renderer.start();
         //endregion
@@ -75,6 +77,9 @@ public class Handler {
 
     public static SerialPort[] getPorts() {
         return SerialPort.getCommPorts();
+    }
+    public static int stringLength(String string){
+        return window.stringLength(string);
     }
 
     //region State traversal

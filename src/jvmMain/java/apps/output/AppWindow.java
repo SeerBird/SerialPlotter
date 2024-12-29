@@ -69,6 +69,9 @@ public class AppWindow extends JFrame {
         });
         setVisible(true);
     }
+    public static void start(){
+
+    }
     public void repaintCanvas(int x,int y,int width, int height){
         canvas.repaint(x,y,width,height);
     }
@@ -83,5 +86,12 @@ public class AppWindow extends JFrame {
     @Override
     public int getHeight() {
         return height;
+    }
+
+    public int stringLength(String string) {
+        if(canvas!=null){
+            return canvas.getFontMetrics(canvas.getFont()).stringWidth(string);
+        }
+        return 0;
     }
 }
