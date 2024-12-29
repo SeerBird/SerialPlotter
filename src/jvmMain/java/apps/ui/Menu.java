@@ -13,8 +13,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class Menu {
+    private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private static final ArrayList<IElement> elements = new ArrayList<>();
     //region predefined elements
     private static final PortList portList = new PortList(0, 0, 100, 100);
@@ -29,6 +31,7 @@ public class Menu {
     private static IElement pressed;
     private static IElement hovered;
     private static Focusable focused;
+    private static Integer middleOrigin;
 
     public static void start() {
         //region create the presets for all the apps states
@@ -66,7 +69,7 @@ public class Menu {
             commandLine.text = "Stop contorting the window!";
         }
         log.y = portList.height;
-        log.height = Math.max(0, height - commandLine.height- portList.height);
+        log.height = Math.max(0, height - commandLine.height - portList.height);
         commandLine.y = height - commandLine.height;
         plotContainer.height = height;
         //endregion
@@ -109,8 +112,8 @@ public class Menu {
     public static void setCommandConsumer(PortPlotGroup port) {
         commandConsumer = port;
     }
-    //endregion
 
+    //endregion
     //region Input
     public static boolean press(ArrayRealVector pos) {
         for (IElement element : elements) {
@@ -126,8 +129,15 @@ public class Menu {
         for (IElement element : new ArrayList<>(elements)) {
             if (element.hover(pos)) {
                 hovered = element;
-                return;
+                break;
             }
+        }
+        if(middleOrigin!=null){
+            int shift = (int) pos.getEntry(1)-middleOrigin;
+            shift = (int) (Math.log(Math.abs(shift)+1)*Math.signum(shift));
+            logger.info(String.valueOf(shift));
+            scroll((int) shift);
+
         }
     }
 
@@ -178,14 +188,26 @@ public class Menu {
         return pressed;
     }
 
+    public static void removePortPlotGroup(PortPlotGroup port) {
+        plotContainer.removePortPlotGroup(port);
+    }
+
+    //region scroll with middle button
+    public static void middleDown(int y) {
+        middleOrigin = y;
+    }
+
+    public static void middleUp() {
+        middleOrigin = null;
+    }
+
+    //endregion
     //region Private
     private static void savePreset(ProgramState state, IElement... presetElements) {
         menuPresets.put(state, new ArrayList<>(List.of(presetElements)));
         elements.clear();
     }
 
-    public static void removePortPlotGroup(PortPlotGroup port) {
-        plotContainer.removePortPlotGroup(port);
-    }
+
     //endregion
 }

@@ -13,8 +13,7 @@ import java.awt.event.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import static apps.input.InputControl.Mousebutton.Left;
-import static apps.input.InputControl.Mousebutton.Right;
+import static apps.input.InputControl.Mousebutton.*;
 import static java.awt.event.KeyEvent.*;
 
 public class InputControl extends MouseAdapter implements KeyListener {
@@ -28,11 +27,13 @@ public class InputControl extends MouseAdapter implements KeyListener {
         Mousebutton button = getButton(e.getButton());
         if (button == Left) {
             Menu.press(mousepos);
+        } else if (button == Middle) {
+            Menu.middleDown((int) mousepos.getEntry(1));
         }
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
+    public void mouseReleased(@NotNull MouseEvent e) {
         Mousebutton button = getButton(e.getButton());
         if (Menu.getFocused() != null) {
             if (Menu.getFocused() instanceof Textbox textbox) {
@@ -46,6 +47,8 @@ public class InputControl extends MouseAdapter implements KeyListener {
         }
         if (button == Left) {
             Menu.release();
+        } else if (button == Middle) {
+            Menu.middleUp();
         }
     }
 
@@ -60,6 +63,7 @@ public class InputControl extends MouseAdapter implements KeyListener {
     public void mouseDragged(@NotNull MouseEvent e) {
         mousepos.setEntry(0, e.getPoint().x);
         mousepos.setEntry(1, e.getPoint().y);
+        Menu.hover(mousepos);
     }
 
     @Override
@@ -95,7 +99,7 @@ public class InputControl extends MouseAdapter implements KeyListener {
                         textbox.setText(textbox.text.substring(0, DevConfig.maxNameLength - 1));
                     }
                 }
-                Handler.repaint(textbox.x,textbox.y,textbox.width, textbox.height);
+                Handler.repaint(textbox.x, textbox.y, textbox.width, textbox.height);
             }
             //endregion
 
@@ -121,7 +125,8 @@ public class InputControl extends MouseAdapter implements KeyListener {
 
     enum Mousebutton {
         Left,
-        Right
+        Right,
+        Middle
     }
 
     public static final ArrayRealVector mousepos = new ArrayRealVector(new Double[]{0.0, 0.0});
@@ -146,11 +151,16 @@ public class InputControl extends MouseAdapter implements KeyListener {
     private static Mousebutton getButton(int button) {
         if (button == MouseEvent.BUTTON1) {
             return Left;
+        } else if (button == MouseEvent.BUTTON2) {
+            return Middle;
+        } else if (button == MouseEvent.BUTTON3) {
+            return Right;
         } else {
             return Right;
         }
     }
-    public static boolean getShift(){
+
+    public static boolean getShift() {
         return Shift;
     }
 }
