@@ -43,7 +43,7 @@ public class PlotContainer extends RectElement {
 
     public void addPortPlotGroup(SerialPort port) { // turns out there will only be one. who needs to change code, right?
         if (portPlotGroups.size() == 1) {
-            portPlotGroups.get(0).getPort().closePort();
+            portPlotGroups.get(0).close();
         }
         portPlotGroups.clear();
         portPlotGroups.add(new PortPlotGroup(x, y, width, height, port)); // make them stack later
@@ -71,7 +71,7 @@ public class PlotContainer extends RectElement {
             return;
         }
         PortPlotGroup port = portPlotGroups.get(0);
-        Button close = port.close;
+        Button close = port.closeButton;
         close.width = 40;
         close.height = 40;
         close.x = x + width - close.width;

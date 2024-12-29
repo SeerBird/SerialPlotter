@@ -54,7 +54,7 @@ public class PortTester {
             String gaa = String.valueOf(state.get(1, 0));
             goo = goo.substring(0, goo.indexOf(".") + 2);
             gaa = gaa.substring(0, gaa.indexOf(".") + 2);
-            byte[] buf = ("(goo:" + goo + ",gaa:" + gaa + ",gee:" + System.nanoTime() % 3 + ",gao:" + goo + ",goa:" + gaa + ",gea:" + System.nanoTime() % 3 + ")").getBytes(StandardCharsets.UTF_8);
+            byte[] buf = ("{kill(goo:" + goo + ",gaa:" + gaa + ",gee:" + System.nanoTime() % 3 + ",gao:" + goo + ",goa:" + gaa + ",gea:" + System.nanoTime() % 3 + ")}").getBytes(StandardCharsets.UTF_8);
             //byte[] buf = ("goo:"+ goo+";").getBytes(StandardCharsets.UTF_8);
 
             port.writeBytes(buf, buf.length);

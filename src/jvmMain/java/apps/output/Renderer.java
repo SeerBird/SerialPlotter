@@ -93,8 +93,8 @@ public class Renderer {
                 drawPlot(plot);
             }
             g.setColor(DevConfig.BACKGROUND);
-            g.fillRect(port.close.x, port.close.y, port.close.width, port.close.height);
-            drawButton(port.close);
+            g.fillRect(port.closeButton.x, port.closeButton.y, port.closeButton.width, port.closeButton.height);
+            drawButton(port.closeButton);
         }
     }
 
