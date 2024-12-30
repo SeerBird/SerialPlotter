@@ -1,6 +1,7 @@
 package apps.output.audio;
 
 
+import apps.Handler;
 import apps.Resources;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +36,9 @@ public class Audio {
     }
 
     public static void playSound(Sound sound) {// design some kind of notifiable object to stop the clip
+        if(!Handler.getSoundOn()){
+            return;
+        }
         try {
             Clip clip = AudioSystem.getClip();
             clip.open(AudioSystem.getAudioInputStream(soundStreams.get(sound)));

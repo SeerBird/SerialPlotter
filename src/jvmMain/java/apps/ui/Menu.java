@@ -25,7 +25,7 @@ public class Menu {
     private static PortPlotGroup commandConsumer; // it's a plot in case I want to show stuff
     private static final Textbox commandLine = new Textbox(0, 0, 100,
             DevConfig.fontSize + DevConfig.vertMargin * 2, "", Menu::sendCommand,
-            DevConfig.borders);
+            DevConfig.borders,false);
     //endregion
     private static final HashMap<ProgramState, ArrayList<IElement>> menuPresets = new HashMap<>();
     private static IElement pressed;
@@ -94,6 +94,7 @@ public class Menu {
         task.start();
         commandLine.currentDefaultText = "";
         Audio.playSound(Sound.pewPew);
+        commandLine.enter();
     }
 
     public static void refreshMenuState() {
@@ -136,8 +137,7 @@ public class Menu {
             int shift = (int) pos.getEntry(1)-middleOrigin;
             shift = (int) (Math.log(Math.abs(shift)+1)*Math.signum(shift));
             logger.info(String.valueOf(shift));
-            scroll((int) shift);
-
+            scroll(shift);
         }
     }
 

@@ -54,6 +54,7 @@ public class Handler {
     private static ProgramState state;
     static final AppWindow window = new AppWindow();
     static final InputInfo input = new InputInfo();
+    static boolean soundsOn = false;
     private final static Thread onShutdown = new Thread(()->{
 
     });
@@ -81,6 +82,9 @@ public class Handler {
     public static int stringLength(String string){
         return window.stringLength(string);
     }
+    public static void setSounds(boolean on){
+        soundsOn = on;
+    }
 
     //region State traversal
     private static void setState(ProgramState state) {
@@ -96,6 +100,9 @@ public class Handler {
     //region Getters
     public static InputInfo getInput() {
         return input;
+    }
+    public static boolean getSoundOn(){
+        return soundsOn;
     }
 
     public static ProgramState getState() {

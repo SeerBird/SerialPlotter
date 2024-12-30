@@ -1,6 +1,8 @@
 package apps.ui.rectangles;
 
 import apps.Handler;
+import apps.output.audio.Audio;
+import apps.output.audio.Sound;
 import apps.ui.IElement;
 import apps.ui.Menu;
 import apps.util.DevConfig;
@@ -17,6 +19,8 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
     private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     SerialPort port;
     public Button closeButton;
+    public Label title;
+    public Textbox baudrate;
     HashMap<String, Plot> plots;
     HashMap<String, Plot> newPlots;
     IElement pressed;
@@ -30,6 +34,25 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
         lastReceivedTime = 0;
         leftover = "";
         this.port = port;
+        title = new Label(x, y, width, height, port.getDescriptivePortName(), DevConfig.text);
+        baudrate = new Textbox(x, y, width, height, String.valueOf(port.getBaudRate()), (String rate) -> {
+            Thread task = new Thread(() -> {
+                boolean res = false;
+                try {
+                    res = port.setBaudRate(Integer.parseInt(rate));
+                } catch (NumberFormatException e) {
+                    Audio.playSound(Sound.stopPls);
+                    Menu.log("Couldn't change baudrate to rate");
+                    return;
+                }
+                if(res){
+                    Menu.log("Changed baudrate to "+rate);
+                }else{
+                    Menu.log("Baudrate "+rate+" not allowed on this system");
+                }
+            });
+            task.start();
+        }, DevConfig.text, true);
         //region connect to port
         boolean res = port.openPort();
         if (!res) {
@@ -104,11 +127,11 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                         String plotName = packet.substring(0, packet.indexOf("(")); // is "" an ok plot name? prolly.
                         Plot plot = plots.get(plotName);
                         //region create plot if absent
-                        if(plot==null){
+                        if (plot == null) {
                             plot = newPlots.get(plotName);
-                            if(plot==null){
-                                plot = new Plot(0,0,width,height,plotName);
-                                newPlots.put(plotName,plot);
+                            if (plot == null) {
+                                plot = new Plot(0, 0, width, height, plotName);
+                                newPlots.put(plotName, plot);
                                 plotAdded = true;
                             }
                         }
@@ -142,7 +165,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                                 continue; //discard this pair
                             }
                             //endregion
-                            plot.addValue(key,value);
+                            plot.addValue(key, value);
                         }
                         if (!plotData.isEmpty()) {
                             Menu.log("Leftovers in plot data: " + plotData);
@@ -152,7 +175,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                     //endregion
                 }
                 //endregion
-                if(plotAdded){
+                if (plotAdded) {
                     Menu.update();
                 }
                 Handler.repaint();
@@ -196,6 +219,10 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
         }
         if (closeButton.press(x, y)) {
             pressed = closeButton;
+            return true;
+        }
+        if(baudrate.press(x,y)){
+            pressed = baudrate;
             return true;
         }
         return false; //will change if there are more than 1

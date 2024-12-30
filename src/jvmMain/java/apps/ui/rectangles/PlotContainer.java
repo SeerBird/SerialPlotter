@@ -74,19 +74,30 @@ public class PlotContainer extends RectElement {
         }
         PortPlotGroup port = portPlotGroups.get(0);
         Button close = port.closeButton;
-        close.width = 40;
-        close.height = 40;
+        close.width = DevConfig.fontSize + DevConfig.vertMargin * 2;
+        close.height = DevConfig.fontSize + DevConfig.vertMargin * 2;
         close.x = x;
         close.y = y;
+        Label title = port.title;
+        title.x=x+close.width;
+        title.y=y;
+        title.width = Math.min(width*2/3,Handler.stringLength(title.text)+2*DevConfig.labelHorMargin);
+        title.height = DevConfig.fontSize + DevConfig.vertMargin * 2;
+        Textbox baudrate = port.baudrate;
+        baudrate.x = x+close.width+title.width;
+        baudrate.y=y;
+        baudrate.width = width- close.width-title.width;
+        baudrate.height = DevConfig.fontSize + DevConfig.vertMargin * 2;
         port.refresh();
         ArrayList<Plot> plots = new ArrayList<>(port.plots.values());
         plots.sort(Comparator.comparing(o -> o.title.text)); // make sure the order is consistent
         //region get best plot layout
+        int remainingHeight = height-title.height;
         int xn = 1;
         int yn = 1;
         while (xn * yn < plots.size()) {
-            double xratio = (double) (width / (xn + 1)) / ((double) height / yn);
-            double yratio = (double) (width / xn) / ((double) height / (yn + 1));
+            double xratio = (double) (width / (xn + 1)) / ((double) remainingHeight / yn);
+            double yratio = (double) (width / xn) / ((double) remainingHeight / (yn + 1));
             if (Math.abs(xratio - DevConfig.optimalRatio) < Math.abs(yratio - DevConfig.optimalRatio)) {
                 xn++;
             } else {
@@ -96,13 +107,13 @@ public class PlotContainer extends RectElement {
         //endregion
         //region set the coords and heights of each plot
         int plotWidth = width / xn;
-        int plotHeight = height / yn;
+        int plotHeight = remainingHeight / yn;
         for (int n = 0; n < plots.size(); n++) {
             int i = n % xn;
             int j = n / xn;
             Plot plot = plots.get(n);
             plot.x = x + i * plotWidth;
-            plot.y = y + j * plotHeight;
+            plot.y = y + title.height + j * plotHeight;
             plot.width = plotWidth;
             plot.height = plotHeight;
             plot.update();

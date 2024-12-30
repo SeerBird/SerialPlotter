@@ -21,10 +21,13 @@ public class Plot extends RectElement {
         range = new Textbox(x, y, width, height, String.valueOf(DevConfig.defaultRange), (String string) -> {
             try {
                 rangeN = Integer.parseInt(string);
+                if(rangeN>DevConfig.maxPlotEntries){
+                    rangeN = DevConfig.maxPlotEntries;
+                }
             } catch (NumberFormatException e) {
                 Audio.playSound(Sound.stopPls);
             }
-        }, DevConfig.borders);
+        }, DevConfig.borders, true);
         dataSets = new HashMap<>();
         newDataSets = new HashMap<>();
         this.title = new Label(x, y, width / 2, height, "E0:" + title, DevConfig.borders);
@@ -79,11 +82,11 @@ public class Plot extends RectElement {
 
         int legendWidth = 0;
         for (String dataSetName : dataSets.keySet()) {
-            legendWidth = Math.max(legendWidth, Handler.stringLength(dataSetName)+2*DevConfig.labelHorMargin);
+            legendWidth = Math.max(legendWidth, Handler.stringLength(dataSetName) + 2 * DevConfig.labelHorMargin);
         }
-        legendWidth = Math.min(legendWidth,width/3);
-        int remainingWidth = width-legendWidth;
-        title.width = remainingWidth*2 / 3;
+        legendWidth = Math.min(legendWidth, width / 3);
+        int remainingWidth = width - legendWidth;
+        title.width = remainingWidth * 2 / 3;
         range.width = remainingWidth / 3;
         title.height = DevConfig.fontSize + DevConfig.vertMargin * 2;
         range.height = DevConfig.fontSize + DevConfig.vertMargin * 2;

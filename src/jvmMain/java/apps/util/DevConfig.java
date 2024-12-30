@@ -8,7 +8,7 @@ public class DevConfig {
     public static final int DWIDTH = 1280;
     public static final int DHEIGHT = 600;
     public static final int maxLogSize = 10000;
-    public static final int maxPlotEntries = 1000; // should be >=defaultRange
+    public static final int maxPlotEntries = 10000; // should be >=defaultRange
     //region colors
     public static Color BACKGROUND = new Color(31, 23, 68, 255);
     public static Color borders = new Color(255, 166, 0, 255);
@@ -30,7 +30,7 @@ public class DevConfig {
     //endregion
     //region plot
     public static int optimalGridlineSpacing = 40;
-    public static int defaultRange = 1000;
+    public static int defaultRange = 150;
     public static double optimalRatio = 16.0 / 9;
     //endregion
     //region menu

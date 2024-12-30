@@ -130,6 +130,9 @@ public class Renderer {
         //endregion
         //region grid
         int order = (int) Math.round((Math.log(max - min)) / Math.log(10)) - 1;
+        if (order > -4 && order < 4) {
+            order = 0;
+        }
         float unit = (float) Math.pow(10, order);
         if (unit == 0) {
             return;
@@ -142,7 +145,7 @@ public class Renderer {
         float step = 0.5F;
         float unitGridSpacing = step;
         int gridSpacing = (int) Math.ceil(pheight * unitRange / unitGridSpacing);
-        while (Math.abs(prevGridSpacing - DevConfig.optimalGridlineSpacing) >
+        while (Math.abs(prevGridSpacing - DevConfig.optimalGridlineSpacing) >=
                 Math.abs(gridSpacing - DevConfig.optimalGridlineSpacing)) {
             unitGridSpacing += step;
             prevGridSpacing = gridSpacing;
@@ -188,14 +191,14 @@ public class Renderer {
         drawLabel(plot.title);
         drawTextbox(plot.range);
         //region legend. is this really enough?
-        int topy = plot.y+DevConfig.fontSize;
+        int topy = plot.y + DevConfig.fontSize;
         int x = plot.x + plot.title.width + plot.range.width + DevConfig.labelHorMargin;
         int legendWidth = plot.width - plot.title.width - plot.range.width;
         for (int i = 0; i < DevConfig.plotColors.size() && i < dataSetNames.size(); i++) {
             g.setColor(DevConfig.plotColors.get(i));
-            g.drawString(truncateString(dataSetNames.get(i),legendWidth),x,topy);
-            topy+=DevConfig.fontSize;
-            if(topy>plot.y+plot.height){
+            g.drawString(truncateString(dataSetNames.get(i), legendWidth), x, topy);
+            topy += DevConfig.fontSize;
+            if (topy > plot.y + plot.height) {
                 break;
             }
         }
@@ -213,12 +216,22 @@ public class Renderer {
     private static void drawPlotContainer(@NotNull PlotContainer e) {
         if (!e.getPortPlotGroups().isEmpty()) {
             PortPlotGroup port = e.getPortPlotGroups().get(0);
+            drawTextbox(port.baudrate);
+            drawLabel(port.title);
+            Button button = port.closeButton;
+            if (button.isPressed()) {
+                g.setColor(button.textColor.darker());
+            } else {
+                g.setColor(button.textColor);
+            }
+            g.drawRect(button.x, button.y, button.width, button.height);
+            g.setColor(DevConfig.sliderColor);
+            g.drawLine(button.x, button.y, button.x+button.width, button.y+button.height);
+            g.drawLine(button.x+button.width, button.y, button.x, button.y+button.height);
             for (Plot plot : port.getPlots().values()) {
                 drawPlot(plot);
             }
             g.setColor(DevConfig.BACKGROUND);
-            g.fillRect(port.closeButton.x, port.closeButton.y, port.closeButton.width, port.closeButton.height);
-            drawButton(port.closeButton);
         }
     }
 
@@ -380,7 +393,7 @@ public class Renderer {
     @NotNull
     private static String truncateString(String string, int length) {
         String entry = string;
-        if(getStringWidth(entry)<length){
+        if (getStringWidth(entry) < length) {
             return entry;
         }
         do {

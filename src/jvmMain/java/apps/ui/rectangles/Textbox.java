@@ -14,14 +14,16 @@ import java.util.function.Consumer;
 
 public class Textbox extends Label implements Focusable {
     final String defaultText;
+    public boolean leaveOnSubmit;
     Consumer<String> action;
     public String currentDefaultText;
     public boolean cursor;
     ScheduledFuture cursorAnimation;
 
-    public Textbox(int x, int y, int width, int height, String defaultText, Consumer<String> action, Color textColor) {
+    public Textbox(int x, int y, int width, int height, String defaultText, Consumer<String> action, Color textColor, boolean leaveOnSubmit) {
         super(x, y, width, height, defaultText, textColor);
         this.defaultText = defaultText;
+        this.leaveOnSubmit = leaveOnSubmit;
         cursor = false;
         currentDefaultText = defaultText;
         this.action = action;
@@ -54,6 +56,10 @@ public class Textbox extends Label implements Focusable {
             cursorAnimation.cancel(true);
         }
         cursor=false;
+        Handler.repaint(x,y,width,height);
+    }
+    public void resetText(){
+        text="";
         Handler.repaint(x,y,width,height);
     }
 

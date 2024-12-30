@@ -26,7 +26,7 @@ public class PortTester {
         state.set(0, 200);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         SerialPort[] ports = SerialPort.getCommPorts();
-        SerialPort port = ports[1];
+        SerialPort port = ports[3];
         port.setBaudRate(115200);
         port.openPort();
         port.addDataListener(new SerialPortDataListener() {

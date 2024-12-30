@@ -87,7 +87,11 @@ public class InputControl extends MouseAdapter implements KeyListener {
                     Menu.unfocus();
                 } else if (key == VK_ENTER) {
                     textbox.useValue();
-                    Menu.unfocus();
+                    if (textbox.leaveOnSubmit) {
+                        Menu.unfocus();
+                    } else {
+                        textbox.resetText();
+                    }
                     text = "";
                 } else if (key == VK_BACK_SPACE) {
                     if (!textbox.text.isEmpty()) {
@@ -112,6 +116,12 @@ public class InputControl extends MouseAdapter implements KeyListener {
         if (key == VK_SHIFT) {
             Shift = false;
             return;
+        }
+        if (key == VK_M) {
+            if (Menu.getFocused() == null) {
+                Handler.setSounds(!Handler.getSoundOn());
+                Menu.log("Sound "+(Handler.getSoundOn()?"on":"off"));
+            }
         }
     }
 
