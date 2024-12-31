@@ -87,8 +87,9 @@ public class Renderer {
     //region draw elements
     private static void drawPlot(@NotNull Plot plot) {
         drawRect(plot, DevConfig.borders);
+        int vertMargin = plot.height/100;
         int pwidth = plot.width;
-        int pheight = plot.height - plot.title.height;
+        int pheight = plot.height - plot.title.height - 2*vertMargin;
         HashMap<String, ArrayList<Float>> dataSets = plot.getDataSets();
         //region find minimum and maximum value
         float max = -Float.MAX_VALUE;
@@ -116,18 +117,6 @@ public class Renderer {
         //endregion
         ArrayList<String> dataSetNames = new ArrayList<>(dataSets.keySet());
         Collections.sort(dataSetNames);
-        //region draw plot line segments between data points
-        for (int i = 0; i < DevConfig.plotColors.size() && i < dataSetNames.size(); i++) { // no colors left? no plot for you.
-            g.setColor(DevConfig.plotColors.get(i));
-            ArrayList<Float> dataSet = dataSets.get(dataSetNames.get(i));
-            for (int n = 0; n < dataSet.size() - 1; n++) {
-                g.drawLine(Math.round(plot.x + ((float) (n * pwidth)) / (float) dataSet.size()),
-                        plotYFromValue(plot, min, max, dataSet.get(n)),
-                        Math.round(plot.x + ((float) ((n + 1) * pwidth)) / (float) dataSet.size()),
-                        plotYFromValue(plot, min, max, dataSet.get(n + 1)));
-            }
-        }
-        //endregion
         //region grid
         int order = (int) Math.round((Math.log(max - min)) / Math.log(10)) - 1;
         if (order > -4 && order < 4) {
@@ -178,19 +167,33 @@ public class Renderer {
                 break;
             }
             int y = plotYFromValue(plot, min, max, value);
-            g.drawLine(plot.x, y,
-                    plot.x + plot.width, y);
-            g.drawString(String.valueOf(nDecPlaces((value / unit), 3)), plot.x, y);
+            g.drawLine(plot.x, y+vertMargin,
+                    plot.x + plot.width, y+vertMargin);
+            g.drawString(String.valueOf(nDecPlaces((value / unit), 3)), plot.x, y+vertMargin);
             lineID = goingUp ? lineID + 1 : lineID - 1;
         }
         //endregion
         //endregion
+        //region title and range
         String title = plot.title.text;
         title = "E" + order + ":" + title.substring(title.indexOf(":") + 1); // is this thread-safe? prolly not.
         plot.title.text = title;
         drawLabel(plot.title);
         drawRect(plot.title,DevConfig.borders);
         drawTextbox(plot.range);
+        //endregion
+        //region draw plot line segments between data points
+        for (int i = 0; i < DevConfig.plotColors.size() && i < dataSetNames.size(); i++) { // no colors left? no plot for you.
+            g.setColor(DevConfig.plotColors.get(i));
+            ArrayList<Float> dataSet = dataSets.get(dataSetNames.get(i));
+            for (int n = 0; n < dataSet.size() - 1; n++) {
+                g.drawLine(Math.round(plot.x + ((float) (n * pwidth)) / (float) dataSet.size()),
+                        plotYFromValue(plot, min, max, dataSet.get(n))+vertMargin,
+                        Math.round(plot.x + ((float) ((n + 1) * pwidth)) / (float) dataSet.size()),
+                        plotYFromValue(plot, min, max, dataSet.get(n + 1))+vertMargin);
+            }
+        }
+        //endregion
         //region legend. is this really enough?
         int topy = plot.y + DevConfig.fontSize;
         int x = plot.x + plot.title.width + plot.range.width + DevConfig.labelHorMargin;
