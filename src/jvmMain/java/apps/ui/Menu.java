@@ -92,7 +92,7 @@ public class Menu {
             Menu.log("Sent " + result + " bytes");
         });
         task.start();
-        commandLine.currentDefaultText = "";
+        commandLine.text = "";
         Audio.playSound(Sound.pewPew);
         commandLine.enter();
     }
@@ -164,6 +164,9 @@ public class Menu {
     }
 
     public static void unfocus() { //I can make this multilevel. no need though.
+        if(focused==null){
+            return;
+        }
         focused.leave();
         focused = null;
     }

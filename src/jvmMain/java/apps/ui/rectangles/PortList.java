@@ -39,7 +39,7 @@ public class PortList extends RectElement {
                     () -> {
                         updatePorts(); // commodification?
                         Menu.addPortPlotGroup(port);
-                    }, port.getDescriptivePortName(), DevConfig.borders));
+                    }, port.getDescriptivePortName(), DevConfig.text));
             topY += DevConfig.fontSize + DevConfig.vertMargin * 2;
         }
     }

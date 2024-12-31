@@ -8,15 +8,15 @@ import apps.ui.Menu;
 import apps.util.GFormatter;
 import com.fazecast.jSerialComm.*;
 
+import java.util.concurrent.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-
 public class Handler {
-    static{
+    static {
         //region set up my logger
         Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
@@ -50,12 +50,13 @@ public class Handler {
         }
         //endregion
     }
+
     private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private static ProgramState state;
     static final AppWindow window = new AppWindow();
     static final InputInfo input = new InputInfo();
     static boolean soundsOn = false;
-    private final static Thread onShutdown = new Thread(()->{
+    private final static Thread onShutdown = new Thread(() -> {
 
     });
 
@@ -72,18 +73,34 @@ public class Handler {
     public static void repaint(int x, int y, int width, int height) {
         window.repaintCanvas(x, y, width, height);
     }
-    public static void repaint(){
+
+    public static void repaint() {
         window.repaintCanvas();
     }
 
     public static SerialPort[] getPorts() {
         return SerialPort.getCommPorts();
     }
-    public static int stringLength(String string){
+
+    public static int stringLength(String string) {
         return window.stringLength(string);
     }
-    public static void setSounds(boolean on){
+
+    public static void setSounds(boolean on) {
         soundsOn = on;
+    }
+
+    public static <V> V timeout(Callable<V> getter, int timeout) throws TimeoutException {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        final Future<V> handler = executor.submit(getter);
+        try {
+            return handler.get(timeout, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            handler.cancel(true);
+            throw new TimeoutException();
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     //region State traversal
@@ -101,7 +118,8 @@ public class Handler {
     public static InputInfo getInput() {
         return input;
     }
-    public static boolean getSoundOn(){
+
+    public static boolean getSoundOn() {
         return soundsOn;
     }
 

@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
 public class PortPlotGroup extends RectElement implements SerialPortMessageListener {
@@ -27,7 +29,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
     String leftover;
     long lastReceivedTime;
 
-    public PortPlotGroup(int x, int y, int width, int height, @NotNull SerialPort port) {
+    public PortPlotGroup(int x, int y, int width, int height, @NotNull SerialPort port) throws TimeoutException {
         super(x, y, width, height);
         plots = new HashMap<>();
         newPlots = new HashMap<>();
@@ -45,16 +47,21 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                     Menu.log("Couldn't change baudrate to rate");
                     return;
                 }
-                if(res){
-                    Menu.log("Changed baudrate to "+rate);
-                }else{
-                    Menu.log("Baudrate "+rate+" not allowed on this system");
+                if (res) {
+                    Menu.log("Changed baudrate to " + rate);
+                } else {
+                    Menu.log("Baudrate " + rate + " not allowed on this system");
                 }
             });
             task.start();
         }, DevConfig.text, true);
         //region connect to port
-        boolean res = port.openPort();
+        boolean res = false;
+        try {
+            res = Handler.timeout(port::openPort, 1000);
+        } catch (TimeoutException e) {
+            throw new TimeoutException("Timed out opening port");
+        }
         if (!res) {
             logger.info("plotter failed to open");
             Menu.log("Failed to open port");
@@ -62,7 +69,11 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
             logger.info("Opened " + port.getDescriptivePortName());
             Menu.log("Opened " + port.getDescriptivePortName());
         }
-        res = port.addDataListener(this);
+        try {
+            res = Handler.timeout(() -> port.addDataListener(this), 1000);
+        } catch (TimeoutException e) {
+            throw new TimeoutException("Timed out opening port");
+        }
         if (!res) {
             logger.info("plotter failed to listen");
             Menu.log("Failed to attach listener");
@@ -77,7 +88,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
             Thread task = new Thread(this::close);
             task.start();
             Menu.removePortPlotGroup(ref);
-        }, "X", DevConfig.borders);
+        }, "X", DevConfig.text);
         //endregion
         Menu.setCommandConsumer(this);
     }
@@ -221,7 +232,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
             pressed = closeButton;
             return true;
         }
-        if(baudrate.press(x,y)){
+        if (baudrate.press(x, y)) {
             pressed = baudrate;
             return true;
         }

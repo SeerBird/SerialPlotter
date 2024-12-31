@@ -58,6 +58,7 @@ public class AppWindow extends JFrame {
         canvas.addMouseMotionListener(input);
         addMouseWheelListener(input);
         canvas.addMouseWheelListener(input);
+        addWindowListener(input);
         //endregion
         this.getRootPane().addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent e) {

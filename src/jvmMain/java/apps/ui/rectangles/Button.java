@@ -1,6 +1,7 @@
 package apps.ui.rectangles;
 
 
+import apps.Handler;
 import apps.output.audio.Audio;
 import apps.output.audio.Sound;
 
@@ -19,6 +20,7 @@ public class Button extends Label {
     @Override
     public boolean press(double x, double y) {
         pressed = super.press(x, y);
+        Handler.repaint(this.x,this.y,width,height);
         return pressed;
     }
 
@@ -29,6 +31,7 @@ public class Button extends Label {
             //Audio.playSound(Sound.button);
         }
         pressed = false;
+        Handler.repaint(x,y,width,height);
     }
 
     public void setAction(Runnable action) {

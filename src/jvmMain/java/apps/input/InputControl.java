@@ -2,6 +2,7 @@ package apps.input;
 
 import apps.Handler;
 import apps.ProgramState;
+import apps.ui.Focusable;
 import apps.ui.Menu;
 import apps.ui.rectangles.Button;
 import apps.ui.rectangles.Textbox;
@@ -16,7 +17,7 @@ import java.util.Map;
 import static apps.input.InputControl.Mousebutton.*;
 import static java.awt.event.KeyEvent.*;
 
-public class InputControl extends MouseAdapter implements KeyListener {
+public class InputControl extends MouseAdapter implements KeyListener,WindowListener{
     //region Events
     private static int scroll = 0;
 
@@ -125,12 +126,51 @@ public class InputControl extends MouseAdapter implements KeyListener {
         }
     }
 
-    //region (not used)
+
+    //endregion
+    //region Window events
     @Override
     public void keyTyped(KeyEvent e) {
 
     }
-    //endregion
+
+    @Override
+    public void windowOpened(WindowEvent e) {
+
+    }
+
+    @Override
+    public void windowClosing(WindowEvent e) {
+
+    }
+
+    @Override
+    public void windowClosed(WindowEvent e) {
+
+    }
+
+    @Override
+    public void windowIconified(WindowEvent e) {
+
+    }
+
+    @Override
+    public void windowDeiconified(WindowEvent e) {
+
+    }
+
+    @Override
+    public void windowActivated(WindowEvent e) {
+        if(lastFocused!=null){
+            lastFocused.enter();
+        }
+    }
+
+    @Override
+    public void windowDeactivated(WindowEvent e) {
+        lastFocused = Menu.getFocused();
+        Menu.unfocus();
+    }
     //endregion
 
     enum Mousebutton {
@@ -141,6 +181,7 @@ public class InputControl extends MouseAdapter implements KeyListener {
 
     public static final ArrayRealVector mousepos = new ArrayRealVector(new Double[]{0.0, 0.0});
     static boolean Shift = false;
+    static Focusable lastFocused;
     static String text = "";
 
     @NotNull

@@ -10,11 +10,11 @@ public class DevConfig {
     public static final int maxLogSize = 10000;
     public static final int maxPlotEntries = 10000; // should be >=defaultRange
     //region colors
-    public static Color BACKGROUND = new Color(31, 23, 68, 255);
-    public static Color borders = new Color(255, 166, 0, 255);
-    public static Color text = new Color(255, 166, 0, 255);
-    public static Color gridColor = new Color(154, 206, 183, 255);
-    public static Color sliderColor = new Color(200, 40, 70, 255);
+    public static Color BACKGROUND = new Color(20, 21, 37, 255);
+    public static Color borders = new Color(222, 158, 0, 255);
+    public static Color text = new Color(222, 158, 0, 255);
+    public static Color gridColor = new Color(255, 204, 0, 255);
+    public static Color sliderColor = new Color(90, 188, 249, 255);
     private static final Color plotColor1 = new Color(0, 210, 218, 255);
     private static final Color plotColor2 = new Color(101, 194, 3, 255);
     private static final Color plotColor3 = new Color(255, 0, 140, 255);

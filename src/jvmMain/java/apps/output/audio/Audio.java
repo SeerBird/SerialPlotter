@@ -33,6 +33,18 @@ public class Audio {
         soundStreams.put(pewPew, Resources.pew);
         soundStreams.put(collision, Resources.pipe);
         soundStreams.put(stopPls, Resources.stoppls);
+        //region load in for it to work without lag later
+        new Thread(()->{for(URL soundFile:soundStreams.values()){
+            try {
+                Clip clip = AudioSystem.getClip();
+                clip.open(AudioSystem.getAudioInputStream(soundFile));
+                clip.close();
+            } catch (LineUnavailableException | UnsupportedAudioFileException ignored) {
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }}).start();
+        //endregion
     }
 
     public static void playSound(Sound sound) {// design some kind of notifiable object to stop the clip

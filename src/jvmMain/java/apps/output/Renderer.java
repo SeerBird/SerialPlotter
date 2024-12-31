@@ -189,6 +189,7 @@ public class Renderer {
         title = "E" + order + ":" + title.substring(title.indexOf(":") + 1); // is this thread-safe? prolly not.
         plot.title.text = title;
         drawLabel(plot.title);
+        drawRect(plot.title,DevConfig.borders);
         drawTextbox(plot.range);
         //region legend. is this really enough?
         int topy = plot.y + DevConfig.fontSize;
@@ -225,7 +226,6 @@ public class Renderer {
                 g.setColor(button.textColor);
             }
             g.drawRect(button.x, button.y, button.width, button.height);
-            g.setColor(DevConfig.sliderColor);
             g.drawLine(button.x, button.y, button.x+button.width, button.y+button.height);
             g.drawLine(button.x+button.width, button.y, button.x, button.y+button.height);
             for (Plot plot : port.getPlots().values()) {
@@ -243,13 +243,18 @@ public class Renderer {
 
     private static void drawButton(@NotNull Button button) {
         if (button.isPressed()) {
-            g.setColor(button.textColor.darker());
+            g.setColor(DevConfig.borders.darker());
         } else {
-            g.setColor(button.textColor);
+            g.setColor(DevConfig.borders);
         }
         g.drawRect(button.x, button.y, button.width, button.height);
 
         //g.drawRect(button.x + 4, button.y + 4, button.width - 8, button.height - 8);
+        if (button.isPressed()) {
+            g.setColor(button.textColor.darker());
+        } else {
+            g.setColor(button.textColor);
+        }
         drawLabelText(button, button.textColor);
     }
 
@@ -300,7 +305,7 @@ public class Renderer {
                     g.getFontMetrics().stringWidth(entry.substring(0, entry.length() - 1)) - area.shiftLeft);
         }
         area.limitHorShift(maxHorShift);
-        g.setColor(DevConfig.borders);
+        g.setColor(DevConfig.text);
         topy = area.y + area.height; // reset topy
         for (int i = entries.size() - 1 - area.shiftUp; i > -1; i--) {
             topy -= g.getFontMetrics().getHeight();
@@ -334,16 +339,15 @@ public class Renderer {
         }
         top += shift;
         bot += shift;
-        g.setColor(DevConfig.sliderColor);
+        g.setColor(DevConfig.borders);
         int width = Math.min(DevConfig.maxSliderWidth, area.width / 8);
         g.fillRect(area.x + area.width - width, top, width, (bot - top));
         //endregion
     }
 
     private static void drawLabelText(@NotNull Label label, Color color) {
-        g.setColor(color);
         int y = label.y + label.height / 2 + DevConfig.fontSize / 3;
-        if (getStringWidth(label.text) < label.width - DevConfig.labelHorMargin * 2) {
+        if (getStringWidth(label.text) <= label.width - DevConfig.labelHorMargin * 2) {
             g.drawString(label.text, label.x + label.width / 2 - g.getFontMetrics().stringWidth(label.text) / 2, y);
         } else {
             g.drawString(truncateString(label.text, label.width - DevConfig.labelHorMargin * 2),

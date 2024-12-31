@@ -16,7 +16,6 @@ public class Textbox extends Label implements Focusable {
     final String defaultText;
     public boolean leaveOnSubmit;
     Consumer<String> action;
-    public String currentDefaultText;
     public boolean cursor;
     ScheduledFuture cursorAnimation;
 
@@ -25,7 +24,6 @@ public class Textbox extends Label implements Focusable {
         this.defaultText = defaultText;
         this.leaveOnSubmit = leaveOnSubmit;
         cursor = false;
-        currentDefaultText = defaultText;
         this.action = action;
     }
 
@@ -51,7 +49,6 @@ public class Textbox extends Label implements Focusable {
 
     @Override
     public void leave() {
-        text = currentDefaultText;
         if (cursorAnimation != null) {
             cursorAnimation.cancel(true);
         }
@@ -64,10 +61,6 @@ public class Textbox extends Label implements Focusable {
     }
 
     public void useValue() {
-        currentDefaultText = text;
-        if (Objects.equals(text, "")) {
-            currentDefaultText = defaultText;
-        }
-        action.accept(String.valueOf(currentDefaultText));
+        action.accept(String.valueOf(text));
     }
 }
