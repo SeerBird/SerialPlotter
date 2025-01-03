@@ -87,16 +87,19 @@ public class Renderer {
     //region draw elements
     private static void drawPlot(@NotNull Plot plot) {
         drawRect(plot, DevConfig.borders);
-        int vertMargin = plot.height/100;
+        if (plot.height - plot.title.height < 5 || plot.width < 5) {
+            return;
+        }
+        int vertMargin = plot.height / 100;
         int pwidth = plot.width;
-        int pheight = plot.height - plot.title.height - 2*vertMargin;
+        int pheight = plot.height - plot.title.height - 2 * vertMargin;
         HashMap<String, ArrayList<Float>> dataSets = plot.getDataSets();
         //region find minimum and maximum value
         float max = -Float.MAX_VALUE;
         float min = Float.MAX_VALUE;
         boolean atLeastOneValue = false;
-        for (ArrayList<Float> dataSet : dataSets.values()) {
-            for (Float value : dataSet) {
+        for (ArrayList<Float> dataSet : new ArrayList<>(dataSets.values())) {
+            for (Float value : new ArrayList<>(dataSet)) {
                 atLeastOneValue = true;
                 if (value < min) {
                     min = value;
@@ -167,9 +170,9 @@ public class Renderer {
                 break;
             }
             int y = plotYFromValue(plot, min, max, value);
-            g.drawLine(plot.x, y+vertMargin,
-                    plot.x + plot.width, y+vertMargin);
-            g.drawString(String.valueOf(nDecPlaces((value / unit), 3)), plot.x, y+vertMargin);
+            g.drawLine(plot.x, y + vertMargin,
+                    plot.x + plot.width, y + vertMargin);
+            g.drawString(String.valueOf(nDecPlaces((value / unit), 3)), plot.x, y + vertMargin);
             lineID = goingUp ? lineID + 1 : lineID - 1;
         }
         //endregion
@@ -179,7 +182,7 @@ public class Renderer {
         title = "E" + order + ":" + title.substring(title.indexOf(":") + 1); // is this thread-safe? prolly not.
         plot.title.text = title;
         drawLabel(plot.title);
-        drawRect(plot.title,DevConfig.borders);
+        drawRect(plot.title, DevConfig.borders);
         drawTextbox(plot.range);
         //endregion
         //region draw plot line segments between data points
@@ -188,9 +191,9 @@ public class Renderer {
             ArrayList<Float> dataSet = dataSets.get(dataSetNames.get(i));
             for (int n = 0; n < dataSet.size() - 1; n++) {
                 g.drawLine(Math.round(plot.x + ((float) (n * pwidth)) / (float) dataSet.size()),
-                        plotYFromValue(plot, min, max, dataSet.get(n))+vertMargin,
+                        plotYFromValue(plot, min, max, dataSet.get(n)),
                         Math.round(plot.x + ((float) ((n + 1) * pwidth)) / (float) dataSet.size()),
-                        plotYFromValue(plot, min, max, dataSet.get(n + 1))+vertMargin);
+                        plotYFromValue(plot, min, max, dataSet.get(n + 1)));
             }
         }
         //endregion
@@ -229,8 +232,8 @@ public class Renderer {
                 g.setColor(button.textColor);
             }
             g.drawRect(button.x, button.y, button.width, button.height);
-            g.drawLine(button.x, button.y, button.x+button.width, button.y+button.height);
-            g.drawLine(button.x+button.width, button.y, button.x, button.y+button.height);
+            g.drawLine(button.x, button.y, button.x + button.width, button.y + button.height);
+            g.drawLine(button.x + button.width, button.y, button.x, button.y + button.height);
             for (Plot plot : port.getPlots().values()) {
                 drawPlot(plot);
             }
@@ -294,18 +297,22 @@ public class Renderer {
         }
         int topy = area.y + area.height;
         int maxHorShift = area.shiftLeft;
+        String longestVisibleEntry = "";
         for (int i = entries.size() - 1 - area.shiftUp; i > -1; i--) {
             topy -= g.getFontMetrics().getHeight();
             if (topy < area.y) {
                 break;
             }
-            String entry = entries.get(i);
-            if (entry.length() <= 1) {
-                maxHorShift = 0;
-                break;
+            if (entries.get(i).length() > longestVisibleEntry.length()) {
+                longestVisibleEntry = entries.get(i);
             }
+        }
+        if (longestVisibleEntry.isEmpty()) {
+            maxHorShift = 0;
+        } else {
             maxHorShift = Math.min(maxHorShift, maxHorShift +
-                    g.getFontMetrics().stringWidth(entry.substring(0, entry.length() - 1)) - area.shiftLeft);
+                    g.getFontMetrics().stringWidth(longestVisibleEntry.substring(0, longestVisibleEntry.length() - 1))
+                    - area.shiftLeft);
         }
         area.limitHorShift(maxHorShift);
         g.setColor(DevConfig.text);
@@ -366,7 +373,7 @@ public class Renderer {
 
     @Contract(pure = true)
     private static int plotYFromValue(@NotNull Plot plot, float min, float max, float value) {
-        return Math.round(plot.y + plot.height - (plot.height - plot.title.height) * (value - min) / (max - min));
+        return Math.round(plot.y + plot.height - DevConfig.vertMargin - (plot.height - plot.title.height - 2 * DevConfig.vertMargin) * (value - min) / (max - min));
     }
     //endregion
 

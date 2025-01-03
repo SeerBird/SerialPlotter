@@ -10,7 +10,6 @@ import com.fazecast.jSerialComm.*;
 
 import java.util.concurrent.*;
 import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,7 +54,7 @@ public class Handler {
     private static ProgramState state;
     static final AppWindow window = new AppWindow();
     static final InputInfo input = new InputInfo();
-    static boolean soundsOn = false;
+    static boolean bullshitOn = true;
     private final static Thread onShutdown = new Thread(() -> {
 
     });
@@ -87,7 +86,7 @@ public class Handler {
     }
 
     public static void setSounds(boolean on) {
-        soundsOn = on;
+        bullshitOn = on;
     }
 
     public static <V> V timeout(Callable<V> getter, int timeout) throws TimeoutException {
@@ -119,8 +118,8 @@ public class Handler {
         return input;
     }
 
-    public static boolean getSoundOn() {
-        return soundsOn;
+    public static boolean getBullshitOn() {
+        return bullshitOn;
     }
 
     public static ProgramState getState() {

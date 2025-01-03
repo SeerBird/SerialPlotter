@@ -51,7 +51,7 @@ public class PlotContainer extends RectElement {
         portPlotGroups.clear();
         try {
             portPlotGroups.add(new PortPlotGroup(x, y, width, height, port)); // make them stack later maybe?
-        }catch (TimeoutException e){
+        } catch (TimeoutException e) {
             Menu.log(e.getMessage());
         }
         Menu.update();
@@ -84,26 +84,26 @@ public class PlotContainer extends RectElement {
         close.x = x;
         close.y = y;
         Label title = port.title;
-        title.x=x+close.width;
-        title.y=y;
-        title.width = Math.min(width*2/3,Handler.stringLength(title.text)+2*DevConfig.labelHorMargin);
+        title.x = x + close.width;
+        title.y = y;
+        title.width = Math.min(width * 2 / 3, Handler.stringLength(title.text) + 2 * DevConfig.labelHorMargin);
         title.height = DevConfig.fontSize + DevConfig.vertMargin * 2;
         Textbox baudrate = port.baudrate;
-        baudrate.x = x+close.width+title.width;
-        baudrate.y=y;
-        baudrate.width = width- close.width-title.width;
+        baudrate.x = x + close.width + title.width;
+        baudrate.y = y;
+        baudrate.width = width - close.width - title.width;
         baudrate.height = DevConfig.fontSize + DevConfig.vertMargin * 2;
         port.refresh();
         ArrayList<Plot> plots = new ArrayList<>(port.plots.values());
         plots.sort(Comparator.comparing(o -> o.title.text)); // make sure the order is consistent
         //region get best plot layout
-        int remainingHeight = height-title.height;
+        int remainingHeight = height - title.height;
         int xn = 1;
         int yn = 1;
         while (xn * yn < plots.size()) {
             double xratio = (double) (width / (xn + 1)) / ((double) remainingHeight / yn);
             double yratio = (double) (width / xn) / ((double) remainingHeight / (yn + 1));
-            if (Math.abs(xratio - DevConfig.optimalRatio) < Math.abs(yratio - DevConfig.optimalRatio)) {
+            if (Math.abs(Math.log(xratio / DevConfig.optimalRatio)) < Math.abs(Math.log(yratio / DevConfig.optimalRatio))) {
                 xn++;
             } else {
                 yn++;
@@ -126,13 +126,15 @@ public class PlotContainer extends RectElement {
         //endregion
         //region amogi
         removeAmogi();
-        if (xn > 1 && yn > 1) {
-            for (int n = plots.size(); n < xn * yn; n++) {
-                int i = n % xn;
-                int j = n / xn;
-                Amogus amogus = new Amogus(x + i * plotWidth, y + j * plotHeight, plotWidth, plotHeight);
-                amogi.add(amogus);
-                Renderer.addAnimation(amogus);
+        if (Handler.getBullshitOn()) {
+            if (xn > 1 && yn > 1) {
+                for (int n = plots.size(); n < xn * yn; n++) {
+                    int i = n % xn;
+                    int j = n / xn;
+                    Amogus amogus = new Amogus(x + i * plotWidth, y + title.height + j * plotHeight, plotWidth, plotHeight);
+                    amogi.add(amogus);
+                    Renderer.addAnimation(amogus);
+                }
             }
         }
         //endregion

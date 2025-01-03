@@ -48,7 +48,7 @@ public class Audio {
     }
 
     public static void playSound(Sound sound) {// design some kind of notifiable object to stop the clip
-        if(!Handler.getSoundOn()){
+        if(!Handler.getBullshitOn()){
             return;
         }
         try {

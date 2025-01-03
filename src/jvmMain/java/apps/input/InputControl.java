@@ -1,18 +1,14 @@
 package apps.input;
 
 import apps.Handler;
-import apps.ProgramState;
 import apps.ui.Focusable;
 import apps.ui.Menu;
-import apps.ui.rectangles.Button;
 import apps.ui.rectangles.Textbox;
 import apps.util.DevConfig;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.*;
-import java.util.HashMap;
-import java.util.Map;
 
 import static apps.input.InputControl.Mousebutton.*;
 import static java.awt.event.KeyEvent.*;
@@ -120,8 +116,8 @@ public class InputControl extends MouseAdapter implements KeyListener,WindowList
         }
         if (key == VK_M) {
             if (Menu.getFocused() == null) {
-                Handler.setSounds(!Handler.getSoundOn());
-                Menu.log("Sound "+(Handler.getSoundOn()?"on":"off"));
+                Handler.setSounds(!Handler.getBullshitOn());
+                Menu.log("Sound "+(Handler.getBullshitOn()?"on":"off"));
             }
         }
     }

@@ -5,6 +5,7 @@ import apps.ui.rectangles.Plot;
 import apps.util.DevConfig;
 import com.fazecast.jSerialComm.*;
 import org.ejml.simple.SimpleMatrix;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
@@ -26,7 +27,7 @@ public class PortTester {
         state.set(0, 200);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         SerialPort[] ports = SerialPort.getCommPorts();
-        SerialPort port = ports[3];
+        SerialPort port = ports[1];
         port.setBaudRate(115200);
         port.openPort();
         port.addDataListener(new SerialPortDataListener() {
@@ -53,25 +54,26 @@ public class PortTester {
         scheduler.scheduleAtFixedRate(() -> {
             SimpleMatrix delta = generator.mult(state).divide(1000);
             state = state.plus(delta);
-            String goo = String.valueOf(state.get(0, 0));
-            String gaa = String.valueOf(state.get(1, 0));
-            String gee;
             time = (time + dt) % 200;
-            goo = String.valueOf(160 * Math.sin(time));
-            gaa = String.valueOf(200 * Math.sin(0.5 * time + 3));
-            gee = String.valueOf(130 * Math.sin(2 * time + 3));
-            goo = goo.substring(0, goo.indexOf(".") + 3);
-            gaa = gaa.substring(0, gaa.indexOf(".") + 3);
-            gee = gee.substring(0, gee.indexOf(".") + 3);
+            double sin1 = 160 * Math.sin(time)+20;
+            double sin2 = 300 * Math.sin(0.5 * time + 3)-100;
+            double sin3 = 130 * Math.sin(2 * time + 3);
+            double exp = Math.min(Math.exp(time/10),Double.MAX_VALUE);
             byte[] buf = (
                     "{" +
-                            "awawawawawawawawawawawawawawa(goo:" + goo + ",gaa:" + gaa + ")" +
-                            "murderrr(KILLMEALREADYPLEASE:"+goo+",hmm:"+gaa+",okNowStopCodingPlease:"+gee+")"+
+                            "someSines(sin1:" + truncate(sin1) + ",sin2:" + truncate(sin2) + ")" +
+                            "otherStuff(a:"+truncate(sin1+sin2)+",b:"+truncate(sin2+sin3)+",silly:"+truncate(sin1+sin3)+")"+
+                            "exp(tooMuch?:"+exp+")"+
                             "}"
             ).getBytes(StandardCharsets.UTF_8);
-            //byte[] buf = ("goo:"+ goo+";").getBytes(StandardCharsets.UTF_8);
+            //byte[] buf = ("sin1:"+ sin1+";").getBytes(StandardCharsets.UTF_8);
 
             port.writeBytes(buf, buf.length);
         }, 8, 10, TimeUnit.MILLISECONDS);
+    }
+    @NotNull
+    private static String truncate(double num){
+        String str = String.valueOf(num);
+        return  str.substring(0, str.indexOf(".") + 3);
     }
 }
