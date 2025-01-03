@@ -1,6 +1,6 @@
 ## SerialPlotter
 A cross-platform app for plotting data from and sending commands to a serial port.
-[rec.mp4](readmeResources%2Frec.mp4)
+[rec.mp4](readmeResources%2Frec2.mp4)
 ## Installation
 Check out the <a href="https://seerbird.github.io/SerialPlotter/download.html">download page</a>.
 ## Usage
