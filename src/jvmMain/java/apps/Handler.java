@@ -54,7 +54,7 @@ public class Handler {
     private static ProgramState state;
     static final AppWindow window = new AppWindow();
     static final InputInfo input = new InputInfo();
-    static boolean bullshitOn = true;
+    static boolean bullshitOn = false;
     private final static Thread onShutdown = new Thread(() -> {
 
     });
@@ -66,6 +66,7 @@ public class Handler {
         Audio.start();
         Menu.start();
         Renderer.start();
+        Menu.update();
         //endregion
     }
 

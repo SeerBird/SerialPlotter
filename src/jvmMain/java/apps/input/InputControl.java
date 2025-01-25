@@ -103,7 +103,6 @@ public class InputControl extends MouseAdapter implements KeyListener,WindowList
                 Handler.repaint(textbox.x, textbox.y, textbox.width, textbox.height);
             }
             //endregion
-
         }
     }
 
@@ -184,12 +183,12 @@ public class InputControl extends MouseAdapter implements KeyListener,WindowList
     private static String getText(@NotNull KeyEvent e) {
         StringBuilder textBuilder = new StringBuilder();
         int key = e.getKeyCode();
-        if (key >= 0x2C && key <= 0x69) {
+        if ((key >= 0x2C && key <= 0x69)||key==VK_SPACE) {
             textBuilder.append(e.getKeyChar());
         }
         String text = textBuilder.toString();
         if (Shift) {
-            text = text.toLowerCase();
+            text = text.toUpperCase();
         }
         text = text.replaceAll("\\p{C}", "");
         return text;

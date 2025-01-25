@@ -24,6 +24,10 @@ public class PortList extends RectElement {
                 lastPorts = ports;
                 updatePorts();
                 Menu.update();
+                return;
+            }
+            if (ports.length == 0){
+                Menu.log("No ports found!");
             }
         }, 8, DevConfig.portListRefreshPeriod, TimeUnit.MILLISECONDS);
     }

@@ -108,6 +108,7 @@ public class Menu {
 
     public static void log(String string) { //called concurrently?
         log.log(string);
+
     }
 
     public static void setCommandConsumer(PortPlotGroup port) {

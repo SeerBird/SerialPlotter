@@ -356,6 +356,7 @@ public class Renderer {
     }
 
     private static void drawLabelText(@NotNull Label label, Color color) {
+        g.setColor(color);
         int y = label.y + label.height / 2 + DevConfig.fontSize / 3;
         if (getStringWidth(label.text) <= label.width - DevConfig.labelHorMargin * 2) {
             g.drawString(label.text, label.x + label.width / 2 - g.getFontMetrics().stringWidth(label.text) / 2, y);
@@ -363,7 +364,6 @@ public class Renderer {
             g.drawString(truncateString(label.text, label.width - DevConfig.labelHorMargin * 2),
                     label.x + DevConfig.labelHorMargin, y);
         }
-
     }
 
     //endregion
