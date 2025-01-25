@@ -300,7 +300,7 @@ public class Renderer {
             }
             do {
                 textbox.displayIndex--;
-                if(textbox.displayIndex <= 0){
+                if (textbox.displayIndex <= 0) {
                     break;
                 }
             } while ((getStringWidth(visibleString + textbox.text.substring(textbox.displayIndex))
@@ -309,25 +309,26 @@ public class Renderer {
             //endregion
             if (textbox.displayIndex != 0) {
                 visibleString = "...";
-                cursorSubstring=3;
-            }else{
+                cursorSubstring = 3;
+            } else {
                 visibleString = "";
             }
             //region increment display until display to cursor fits
-            while (getStringWidth(visibleString + textbox.text.substring(textbox.displayIndex, textbox.cursorIndex + 1))
-                    + 2 * DevConfig.labelHorMargin >= textbox.width) {
+            while (true) {
+                if (getStringWidth(visibleString + textbox.text.substring(textbox.displayIndex, textbox.cursorIndex + 1) + "...")
+                        + 2 * DevConfig.labelHorMargin < textbox.width) {
+                    break;
+                }
+                if (getStringWidth(visibleString + textbox.text.substring(textbox.displayIndex))
+                        + 2 * DevConfig.labelHorMargin < textbox.width) {
+                    break;
+                }
                 textbox.displayIndex++;
             }
             //endregion
             cursorSubstring += textbox.cursorIndex + 1 - textbox.displayIndex;
             visibleString += textbox.text.substring(textbox.displayIndex);
-            //region truncate if display to end doesn't fit
-            if (getStringWidth(visibleString)
-                    + 2 * DevConfig.labelHorMargin > textbox.width) {
-                visibleString = truncateStringEnd(visibleString, textbox.width - 2 * DevConfig.labelHorMargin);
-
-            }
-            //endregion
+            visibleString = truncateStringEnd(visibleString, textbox.width - 2 * DevConfig.labelHorMargin);
         }
         g.drawString(visibleString, textbox.x + textbox.width / 2 - g.getFontMetrics().stringWidth(visibleString) / 2, texty);
         //region cursor
