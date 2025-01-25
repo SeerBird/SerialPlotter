@@ -8,12 +8,18 @@ import apps.util.DevConfig;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.*;
+import java.io.IOException;
+import java.util.Arrays;
 
 import static apps.input.InputControl.Mousebutton.*;
 import static java.awt.event.KeyEvent.*;
 
-public class InputControl extends MouseAdapter implements KeyListener,WindowListener{
+public class InputControl extends MouseAdapter implements KeyListener, WindowListener {
     //region Events
     private static int scroll = 0;
 
@@ -77,6 +83,10 @@ public class InputControl extends MouseAdapter implements KeyListener,WindowList
             Shift = true;
             return;
         }
+        if (key == VK_CONTROL) {
+            Control = true;
+            return;
+        }
         if (Menu.getFocused() != null) {
             //region textbox
             if (Menu.getFocused() instanceof Textbox textbox) {
@@ -92,13 +102,22 @@ public class InputControl extends MouseAdapter implements KeyListener,WindowList
                     text = "";
                 } else if (key == VK_BACK_SPACE) {
                     if (!textbox.text.isEmpty()) {
-                        textbox.setText(textbox.text.substring(0, textbox.text.length() - 1));
+                        textbox.backspace();
                     }
-                } else if (textbox.text.length() < DevConfig.maxNameLength) {
-                    textbox.setText(textbox.text + getText(e));
-                    if (textbox.text.length() > DevConfig.maxNameLength) {
-                        textbox.setText(textbox.text.substring(0, DevConfig.maxNameLength - 1));
-                    }
+                } else if (Control && key == VK_V) {
+                    try {
+                        Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
+                        if (clip.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
+                            textbox.insertText((String) clip.getData(DataFlavor.stringFlavor));
+                        }
+                    } catch (UnsupportedFlavorException | IOException ignore) {
+                    } // maybe think ab IOException?
+                } else if (key == VK_LEFT) {
+                    textbox.shift(-1);
+                } else if (key == VK_RIGHT) {
+                    textbox.shift(1);
+                } else if (textbox.text.length() < DevConfig.maxTextboxLength) {
+                    textbox.insertText(getText(e));
                 }
                 Handler.repaint(textbox.x, textbox.y, textbox.width, textbox.height);
             }
@@ -113,10 +132,14 @@ public class InputControl extends MouseAdapter implements KeyListener,WindowList
             Shift = false;
             return;
         }
+        if (key == VK_CONTROL) {
+            Control = false;
+            return;
+        }
         if (key == VK_M) {
             if (Menu.getFocused() == null) {
                 Handler.setSounds(!Handler.getBullshitOn());
-                Menu.log("Sound "+(Handler.getBullshitOn()?"on":"off"));
+                Menu.log("Sound " + (Handler.getBullshitOn() ? "on" : "off"));
             }
         }
     }
@@ -156,7 +179,7 @@ public class InputControl extends MouseAdapter implements KeyListener,WindowList
 
     @Override
     public void windowActivated(WindowEvent e) {
-        if(lastFocused!=null){
+        if (lastFocused != null) {
             lastFocused.enter();
         }
     }
@@ -176,14 +199,16 @@ public class InputControl extends MouseAdapter implements KeyListener,WindowList
 
     public static final ArrayRealVector mousepos = new ArrayRealVector(new Double[]{0.0, 0.0});
     static boolean Shift = false;
+    static boolean Control = false;
     static Focusable lastFocused;
     static String text = "";
+    static Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
 
     @NotNull
     private static String getText(@NotNull KeyEvent e) {
         StringBuilder textBuilder = new StringBuilder();
         int key = e.getKeyCode();
-        if ((key >= 0x2C && key <= 0x69)||key==VK_SPACE) {
+        if ((key >= 0x2C && key <= 0x69) || key == VK_SPACE) {
             textBuilder.append(e.getKeyChar());
         }
         String text = textBuilder.toString();

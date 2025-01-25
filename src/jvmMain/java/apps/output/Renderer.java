@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -203,7 +202,7 @@ public class Renderer {
         int legendWidth = plot.width - plot.title.width - plot.range.width;
         for (int i = 0; i < DevConfig.plotColors.size() && i < dataSetNames.size(); i++) {
             g.setColor(DevConfig.plotColors.get(i));
-            g.drawString(truncateString(dataSetNames.get(i), legendWidth), x, topy);
+            g.drawString(truncateStringEnd(dataSetNames.get(i), legendWidth), x, topy);
             topy += DevConfig.fontSize;
             if (topy > plot.y + plot.height) {
                 break;
@@ -280,13 +279,66 @@ public class Renderer {
     }
 
     private static void drawTextbox(@NotNull Textbox textbox) {
-        drawLabelText(textbox, textbox.textColor);
-        drawRect(textbox, textbox.textColor);
+        g.setColor(textbox.textColor);
+        int texty = textbox.y + textbox.height / 2 + DevConfig.fontSize / 3;
+        String visibleString;
+        int cursorSubstring;
+        //region draw whole text if start to end fits
+        if (getStringWidth(textbox.text) < textbox.width - DevConfig.labelHorMargin * 2) {
+            visibleString = textbox.text;
+            textbox.displayIndex = 0;
+            cursorSubstring = textbox.cursorIndex + 1;
+        }
+        //endregion
+        else {
+            cursorSubstring = 0;
+            visibleString = "";
+            textbox.displayIndex = Math.min(textbox.displayIndex, textbox.cursorIndex + 1);
+            //region decrement display until display to end doesn't fit
+            if (textbox.displayIndex != 0) {
+                visibleString = "...";
+            }
+            do {
+                textbox.displayIndex--;
+                if(textbox.displayIndex <= 0){
+                    break;
+                }
+            } while ((getStringWidth(visibleString + textbox.text.substring(textbox.displayIndex))
+                    + 2 * DevConfig.labelHorMargin < textbox.width));
+            textbox.displayIndex++;
+            //endregion
+            if (textbox.displayIndex != 0) {
+                visibleString = "...";
+                cursorSubstring=3;
+            }else{
+                visibleString = "";
+            }
+            //region increment display until display to cursor fits
+            while (getStringWidth(visibleString + textbox.text.substring(textbox.displayIndex, textbox.cursorIndex + 1))
+                    + 2 * DevConfig.labelHorMargin >= textbox.width) {
+                textbox.displayIndex++;
+            }
+            //endregion
+            cursorSubstring += textbox.cursorIndex + 1 - textbox.displayIndex;
+            visibleString += textbox.text.substring(textbox.displayIndex);
+            //region truncate if display to end doesn't fit
+            if (getStringWidth(visibleString)
+                    + 2 * DevConfig.labelHorMargin > textbox.width) {
+                visibleString = truncateStringEnd(visibleString, textbox.width - 2 * DevConfig.labelHorMargin);
+
+            }
+            //endregion
+        }
+        g.drawString(visibleString, textbox.x + textbox.width / 2 - g.getFontMetrics().stringWidth(visibleString) / 2, texty);
+        //region cursor
         if (textbox.cursor) {
-            int x = textbox.x + textbox.width / 2 + g.getFontMetrics().stringWidth(textbox.text) / 2 + 2;
+            int x = textbox.x + textbox.width / 2 - g.getFontMetrics().stringWidth(visibleString) / 2
+                    + g.getFontMetrics().stringWidth(visibleString.substring(0, cursorSubstring));
             int y = textbox.y + textbox.height / 2 + DevConfig.fontSize / 3;
             g.drawLine(x, y, x, y - DevConfig.fontSize * 2 / 3);
         }
+        //endregion
+        drawRect(textbox, textbox.textColor);
     }
 
     private static void drawTextArea(@NotNull TextArea area) {
@@ -325,7 +377,7 @@ public class Renderer {
             String entry = entries.get(i);
             //region shorten entry to make it fit, adding ... if shortening was needed
             if (g.getFontMetrics().stringWidth(entry) > area.width + maxHorShift) {
-                entry = truncateString(entry, area.width + maxHorShift);
+                entry = truncateStringEnd(entry, area.width + maxHorShift);
             }
             g.drawString(entry, area.x - maxHorShift, topy);
             //endregion
@@ -361,7 +413,7 @@ public class Renderer {
         if (getStringWidth(label.text) <= label.width - DevConfig.labelHorMargin * 2) {
             g.drawString(label.text, label.x + label.width / 2 - g.getFontMetrics().stringWidth(label.text) / 2, y);
         } else {
-            g.drawString(truncateString(label.text, label.width - DevConfig.labelHorMargin * 2),
+            g.drawString(truncateStringEnd(label.text, label.width - DevConfig.labelHorMargin * 2),
                     label.x + DevConfig.labelHorMargin, y);
         }
     }
@@ -405,7 +457,7 @@ public class Renderer {
     }
 
     @NotNull
-    private static String truncateString(String string, int length) {
+    private static String truncateStringEnd(String string, int length) {
         String entry = string;
         if (getStringWidth(entry) < length) {
             return entry;

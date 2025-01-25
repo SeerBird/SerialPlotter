@@ -39,7 +39,7 @@ public class DevConfig {
     public static int maxSliderWidth = 20;
     public static int vertMargin = 4;
     public static int fontSize = 16;
-    public static int maxNameLength = 30;
+    public static int maxTextboxLength = 300;
     public static int maxParticles = 100;
     public static int portButtonHeight = 20;
     public static long portListRefreshPeriod = 100; // millis
