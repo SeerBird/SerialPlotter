@@ -109,8 +109,14 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                 leftover = "";
                 //region read message
                 while (true) {
-                    if (!message.contains("{")) {
-                        leftover = message;
+                    if ((!message.contains("{"))) {
+                        if (System.nanoTime() - lastReceivedTime < DevConfig.outOfPacketMessageTimeout * 1000000) {
+                            if (!message.isEmpty()) {
+                                Menu.log('"' + message + '"');
+                            }
+                        } else {
+                            leftover = message;
+                        }
                         break; //nothing left to read
                     }
                     //region log text that is between packets(is this sane?)

@@ -189,9 +189,9 @@ public class Renderer {
             g.setColor(DevConfig.plotColors.get(i));
             ArrayList<Float> dataSet = dataSets.get(dataSetNames.get(i));
             for (int n = 0; n < dataSet.size() - 1; n++) {
-                g.drawLine(Math.round(plot.x + ((float) (n * pwidth)) / (float) dataSet.size()),
+                g.drawLine(Math.round(plot.x + ((float) (n * pwidth)) / (float) (dataSet.size()-1)),
                         plotYFromValue(plot, min, max, dataSet.get(n)),
-                        Math.round(plot.x + ((float) ((n + 1) * pwidth)) / (float) dataSet.size()),
+                        Math.round(plot.x + ((float) ((n + 1) * pwidth)) / (float) (dataSet.size()-1)),
                         plotYFromValue(plot, min, max, dataSet.get(n + 1)));
             }
         }

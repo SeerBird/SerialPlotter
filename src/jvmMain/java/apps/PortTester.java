@@ -46,7 +46,7 @@ public class PortTester {
                     int numRead = port.readBytes(buf, buf.length);
                     String message = new String(buf, StandardCharsets.UTF_8);
                     logger.info("Tester got '" + message + "'");
-                    buf = ("(gaoo:" + System.nanoTime() % 3 + ")").getBytes(StandardCharsets.UTF_8);
+                    buf = ("I am a " + System.nanoTime() % 100 + " sentient octopus").getBytes(StandardCharsets.UTF_8);
                     port.writeBytes(buf, buf.length);
                 }
             }
@@ -69,7 +69,7 @@ public class PortTester {
             //byte[] buf = ("sin1:"+ sin1+";").getBytes(StandardCharsets.UTF_8);
 
             port.writeBytes(buf, buf.length);
-        }, 8, 10, TimeUnit.MILLISECONDS);
+        }, 8, 1500, TimeUnit.MILLISECONDS);
     }
     @NotNull
     private static String truncate(double num){
