@@ -69,7 +69,7 @@ public class PortTester {
             //byte[] buf = ("sin1:"+ sin1+";").getBytes(StandardCharsets.UTF_8);
 
             port.writeBytes(buf, buf.length);
-        }, 8, 1500, TimeUnit.MILLISECONDS);
+        }, 8, 15000, TimeUnit.MILLISECONDS);
     }
     @NotNull
     private static String truncate(double num){

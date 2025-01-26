@@ -12,9 +12,9 @@ import com.fazecast.jSerialComm.SerialPortMessageListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.logging.Logger;
 
 public class PortPlotGroup extends RectElement implements SerialPortMessageListener {
@@ -28,6 +28,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
     IElement pressed;
     String leftover;
     long lastReceivedTime;
+    final HashMap<ScheduledExecutorService, Boolean> timeoutFlags = new HashMap<>();
 
     public PortPlotGroup(int x, int y, int width, int height, @NotNull SerialPort port) throws TimeoutException {
         super(x, y, width, height);
@@ -109,14 +110,20 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                 leftover = "";
                 //region read message
                 while (true) {
+                    timeoutFlags.replaceAll((s, v) -> true);
                     if ((!message.contains("{"))) {
-                        if (System.nanoTime() - lastReceivedTime < DevConfig.outOfPacketMessageTimeout * 1000000) {
-                            if (!message.isEmpty()) {
-                                Menu.log('"' + message + '"');
+                        leftover = message;
+                        final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+                        timeoutFlags.put(scheduler, false);
+                        scheduler.schedule(() -> {
+                            synchronized (timeoutFlags) {
+                                if (!timeoutFlags.get(scheduler)) {
+                                    Menu.log(leftover);
+                                    leftover = "";
+                                }
+                                timeoutFlags.remove(scheduler);
                             }
-                        } else {
-                            leftover = message;
-                        }
+                        }, 100, TimeUnit.MILLISECONDS);
                         break; //nothing left to read
                     }
                     //region log text that is between packets(is this sane?)
@@ -124,7 +131,6 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                     if (!outsideOfPacket.isEmpty()) {
                         Menu.log('"' + outsideOfPacket + '"');
                         message = message.substring(message.indexOf("{"));
-                        logger.info("SHIT!!!");
                     }
                     //endregion
                     if (!message.contains("}")) {
