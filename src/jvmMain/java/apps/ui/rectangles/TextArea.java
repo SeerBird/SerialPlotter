@@ -4,6 +4,7 @@ import apps.Handler;
 import apps.input.InputControl;
 import apps.ui.Scrollable;
 import apps.util.DevConfig;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -64,11 +65,18 @@ public class TextArea extends RectElement implements Scrollable {
         Handler.repaint(x,y,width,height);
     }
 
-    public void log(String string) { //called concurrently?
-        if(shiftUp !=0){
-            shiftUp++;
+    public void log(@NotNull String string) { //called concurrently?
+        String[] newEntries = string.split("\n");
+        for(String s:newEntries){
+            if(s.isEmpty()){
+                continue;
+            }
+            if(shiftUp !=0){
+                shiftUp++;
+            }
+            this.newEntries.add(s);
         }
-        newEntries.add(string);
+
         Handler.repaint(x,y,width,height);
     }
 }
