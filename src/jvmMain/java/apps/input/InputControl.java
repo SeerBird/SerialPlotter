@@ -116,6 +116,10 @@ public class InputControl extends MouseAdapter implements KeyListener, WindowLis
                     textbox.shift(-1);
                 } else if (key == VK_RIGHT) {
                     textbox.shift(1);
+                } else if (key == VK_DOWN) {
+                    Menu.commandShift(1);
+                } else if (key == VK_UP) {
+                    Menu.commandShift(-1);
                 } else if (textbox.text.length() < DevConfig.maxTextboxLength) {
                     textbox.insertText(getText(e));
                 }

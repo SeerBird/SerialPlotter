@@ -63,6 +63,8 @@ public class Textbox extends Label implements Focusable {
 
     public void resetText() {
         text = "";
+        displayIndex = 0;
+        cursorIndex = -1;
         Handler.repaint(x, y, width, height);
     }
 

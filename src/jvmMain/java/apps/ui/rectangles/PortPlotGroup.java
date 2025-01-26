@@ -118,6 +118,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                     if (!outsideOfPacket.isEmpty()) {
                         Menu.log('"' + outsideOfPacket + '"');
                         message = message.substring(message.indexOf("{"));
+                        logger.info("SHIT!!!");
                     }
                     //endregion
                     if (!message.contains("}")) {

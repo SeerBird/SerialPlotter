@@ -25,15 +25,23 @@ public class Menu {
     private static PortPlotGroup commandConsumer; // it's a plot in case I want to show stuff
     private static final Textbox commandLine = new Textbox(0, 0, 100,
             DevConfig.fontSize + DevConfig.vertMargin * 2, "", Menu::sendCommand,
-            DevConfig.borders,false);
+            DevConfig.borders, false);
     //endregion
     private static final HashMap<ProgramState, ArrayList<IElement>> menuPresets = new HashMap<>();
     private static IElement pressed;
     private static IElement hovered;
     private static Focusable focused;
     private static Integer middleOrigin;
+    private static final ArrayList<String> commandLog = new ArrayList<>();
+    private static int commandID = 0;
+    private static final Thread onShutdown = new Thread(() -> {
+        for(PortPlotGroup port: plotContainer.getPortPlotGroups()){
+            port.close();
+        }
+    });
 
     public static void start() {
+        Runtime.getRuntime().addShutdownHook(onShutdown);
         //region create the presets for all the apps states
         //region main
         savePreset(ProgramState.main, log, portList, commandLine, plotContainer);
@@ -77,8 +85,15 @@ public class Menu {
     }
 
     private static void sendCommand(String command) {
+        //region add command to commandLog
+        commandLog.add(command);
+        if (commandLog.size() > DevConfig.maxCommandLogSize) {
+            commandLog.remove(0);
+        }
+        commandID = commandLog.size();
+        //endregion
         if (commandConsumer == null) {
-            Menu.log("No port connected! I think.");
+            Menu.log("No port connected! I think...");
             return;
         }
         SerialPort port = commandConsumer.getPort();
@@ -89,12 +104,12 @@ public class Menu {
         byte[] bytes = command.getBytes(StandardCharsets.UTF_8);
         Thread task = new Thread(() -> {
             int result = port.writeBytes(bytes, bytes.length);
-            Menu.log("Sent " + result + " bytes");
+            Menu.log("Sent \"" + command + "\" as " + result + " bytes");
         });
         task.start();
         commandLine.text = "";
         Audio.playSound(Sound.pewPew);
-        commandLine.enter();
+        //commandLine.enter(); // I think this is redundant? each textBox has a leaveOnSubmit property now...
     }
 
     public static void refreshMenuState() {
@@ -134,9 +149,9 @@ public class Menu {
                 break;
             }
         }
-        if(middleOrigin!=null){
-            int shift = (int) pos.getEntry(1)-middleOrigin;
-            shift = (int) (Math.log(Math.abs(shift)+1)*Math.signum(shift));
+        if (middleOrigin != null) {
+            int shift = (int) pos.getEntry(1) - middleOrigin;
+            shift = (int) (Math.log(Math.abs(shift) + 1) * Math.signum(shift));
             logger.info(String.valueOf(shift));
             scroll(shift);
         }
@@ -165,11 +180,23 @@ public class Menu {
     }
 
     public static void unfocus() { //I can make this multilevel. no need though.
-        if(focused==null){
+        if (focused == null) {
             return;
         }
         focused.leave();
         focused = null;
+    }
+
+    public static void commandShift(int n) {
+        commandID = Math.max(Math.min(commandID + n, commandLog.size()), 0);
+        if (commandID == commandLog.size()) {
+            commandLine.setText("");
+        } else {
+            commandLine.setText(commandLog.get(commandID));
+        }
+        commandLine.displayIndex = 0;
+        commandLine.shift(commandLine.text.length());
+        Handler.repaint(commandLine.x, commandLine.y, commandLine.width, commandLine.height);
     }
 
     //endregion
