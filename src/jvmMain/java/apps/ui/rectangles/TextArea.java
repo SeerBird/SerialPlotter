@@ -76,7 +76,6 @@ public class TextArea extends RectElement implements Scrollable {
             }
             this.newEntries.add(s);
         }
-
         Handler.repaint(x,y,width,height);
     }
 }

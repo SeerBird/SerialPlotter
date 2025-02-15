@@ -11,8 +11,10 @@ import com.fazecast.jSerialComm.SerialPort;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Logger;
 
 public class PlotContainer extends RectElement {
+    private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     ArrayList<PortPlotGroup> portPlotGroups = new ArrayList<>();
     PortPlotGroup pressed;
     ArrayList<Amogus> amogi;
@@ -45,13 +47,18 @@ public class PlotContainer extends RectElement {
     //endregion
 
     public void addPortPlotGroup(SerialPort port) { // turns out there will only be one. who needs to change code, right?
-        if (portPlotGroups.size() == 1) {
-            portPlotGroups.get(0).close();
-        }
-        portPlotGroups.clear();
         try {
-            portPlotGroups.add(new PortPlotGroup(x, y, width, height, port)); // make them stack later maybe?
-        } catch (TimeoutException e) {
+            if (portPlotGroups.size() == 1) {
+                portPlotGroups.get(0).close();
+            }
+            portPlotGroups.clear();
+            try {
+                portPlotGroups.add(new PortPlotGroup(x, y, width, height, port)); // make them stack later maybe?
+            } catch (TimeoutException e) {
+                Menu.log(e.getMessage());
+            }
+        } catch (Exception e) {
+            logger.info(e.getMessage());
             Menu.log(e.getMessage());
         }
         Menu.update();

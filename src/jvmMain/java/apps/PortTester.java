@@ -69,7 +69,12 @@ public class PortTester {
             //byte[] buf = ("sin1:"+ sin1+";").getBytes(StandardCharsets.UTF_8);
 
             port.writeBytes(buf, buf.length);
-        }, 8, 15000, TimeUnit.MILLISECONDS);
+        }, 8, 10, TimeUnit.MILLISECONDS);
+        /*
+        scheduler.scheduleAtFixedRate(() -> {
+            byte[] buf = ("A 8 0 1 3 BABABOI live and prosper").getBytes(StandardCharsets.UTF_8);
+            port.writeBytes(buf, buf.length);}, 10, 1501, TimeUnit.MILLISECONDS);
+         */
     }
     @NotNull
     private static String truncate(double num){

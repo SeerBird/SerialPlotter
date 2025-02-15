@@ -98,6 +98,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
     @Override
     public void serialEvent(@NotNull SerialPortEvent event) {
         switch (event.getEventType()) {
+            // region data available
             case SerialPort.LISTENING_EVENT_DATA_AVAILABLE:
                 if (System.nanoTime() - lastReceivedTime < DevConfig.messageReceivePeriod * 1000000) {
                     return;
@@ -204,12 +205,16 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                 }
                 Handler.repaint();
                 break;
+            // endregion
             case SerialPort.LISTENING_EVENT_PORT_DISCONNECTED:
                 port.closePort();
                 Menu.removePortPlotGroup(this);
                 logger.info("Port " + port.getDescriptivePortName() + " disconnected.");
                 Menu.log("Port " + port.getDescriptivePortName() + " disconnected.");
                 break;
+            default:
+                logger.info("Unexpected event type: " + event.getEventType());
+                Menu.log("Unexpected event type: " + event.getEventType());
         }
     }
 

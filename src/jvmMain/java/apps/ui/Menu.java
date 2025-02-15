@@ -35,7 +35,7 @@ public class Menu {
     private static final ArrayList<String> commandLog = new ArrayList<>();
     private static int commandID = 0;
     private static final Thread onShutdown = new Thread(() -> {
-        for(PortPlotGroup port: plotContainer.getPortPlotGroups()){
+        for (PortPlotGroup port : plotContainer.getPortPlotGroups()) {
             port.close();
         }
     });
@@ -85,6 +85,9 @@ public class Menu {
     }
 
     private static void sendCommand(String command) {
+        if(command.isEmpty()){
+            return;
+        }
         //region add command to commandLog
         commandLog.add(command);
         if (commandLog.size() > DevConfig.maxCommandLogSize) {
@@ -104,7 +107,7 @@ public class Menu {
         byte[] bytes = command.getBytes(StandardCharsets.UTF_8);
         Thread task = new Thread(() -> {
             int result = port.writeBytes(bytes, bytes.length);
-            Menu.log("Sent \"" + command + "\" as " + result + " bytes");
+            Menu.log("Sent \"" + command + "\" as " + result + " byte" + (result == 1 ? "" : "s"));
         });
         task.start();
         commandLine.text = "";
