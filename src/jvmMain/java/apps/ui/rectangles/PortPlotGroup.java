@@ -62,6 +62,9 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
             res = Handler.timeout(port::openPort, 1000);
         } catch (TimeoutException e) {
             throw new TimeoutException("Timed out opening port");
+        } catch (ExecutionException e) {
+            logger.info("Exception opening port: " + e.getCause());
+            Menu.log("Exception opening port: " + e.getCause());
         }
         if (!res) {
             logger.info("plotter failed to open");
@@ -73,7 +76,10 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
         try {
             res = Handler.timeout(() -> port.addDataListener(this), 1000);
         } catch (TimeoutException e) {
-            throw new TimeoutException("Timed out opening port");
+            throw new TimeoutException("Timed out attaching listener to port");
+        } catch (ExecutionException e) {
+            logger.info("Exception attaching listener: " + e.getCause());
+            Menu.log("Exception attaching listener: " + e.getCause());
         }
         if (!res) {
             logger.info("plotter failed to listen");

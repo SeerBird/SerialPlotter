@@ -90,7 +90,7 @@ public class Handler {
         bullshitOn = on;
     }
 
-    public static <V> V timeout(Callable<V> getter, int timeout) throws TimeoutException {
+    public static <V> V timeout(Callable<V> getter, int timeout) throws TimeoutException, ExecutionException {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final Future<V> handler = executor.submit(getter);
         try {
@@ -98,7 +98,7 @@ public class Handler {
         } catch (TimeoutException e) {
             handler.cancel(true);
             throw new TimeoutException();
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }

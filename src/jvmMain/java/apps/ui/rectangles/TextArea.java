@@ -20,7 +20,7 @@ public class TextArea extends RectElement implements Scrollable {
         super(x, y, width, height);
         entries = new ArrayList<>();
         newEntries = new ArrayList<>();
-        shiftUp =0;
+        shiftUp = 0;
     }
 
     public void refresh() {
@@ -31,24 +31,25 @@ public class TextArea extends RectElement implements Scrollable {
         newEntries.clear();
         //region vertical shift
         shiftUp += deltaVertShift;
-        deltaVertShift =0;
-        if(shiftUp >entries.size()-1){
-            shiftUp =entries.size()-1;
+        deltaVertShift = 0;
+        if (shiftUp > entries.size() - 1) {
+            shiftUp = entries.size() - 1;
         }
-        if(shiftUp <0){
-            shiftUp =0;
+        if (shiftUp < 0) {
+            shiftUp = 0;
         }
         //endregion
         //region horizontal shift
-        shiftLeft+=deltaHorShift;
-        deltaHorShift=0;
-        if(shiftLeft<0){
-            shiftLeft=0;
+        shiftLeft += deltaHorShift;
+        deltaHorShift = 0;
+        if (shiftLeft < 0) {
+            shiftLeft = 0;
         }
         //endregion
     }
-    public void limitHorShift(int maxShift){ // called from the render thread
-        shiftLeft = Math.min(shiftLeft,maxShift);
+
+    public void limitHorShift(int maxShift) { // called from the render thread
+        shiftLeft = Math.min(shiftLeft, maxShift);
     }
 
     @Override
@@ -58,24 +59,28 @@ public class TextArea extends RectElement implements Scrollable {
 
     @Override
     public void scroll(int steps) {
-        if(InputControl.getShift()){
-            deltaHorShift+=steps*4;
-        }else{
-        deltaVertShift -=steps;}
-        Handler.repaint(x,y,width,height);
+        if (InputControl.getShift()) {
+            deltaHorShift += steps * 4;
+        } else {
+            deltaVertShift -= steps;
+        }
+        Handler.repaint(x, y, width, height);
     }
 
     public void log(@NotNull String string) { //called concurrently?
         String[] newEntries = string.split("\n");
-        for(String s:newEntries){
-            if(s.isEmpty()){
+        for (String s : newEntries) {
+            if (this.newEntries.size() > DevConfig.maxLogSize) {
+                break;
+            }
+            if (s.length() > DevConfig.maxLogEntryLength || s.isEmpty()) {
                 continue;
             }
-            if(shiftUp !=0){
+            if (shiftUp != 0) {
                 shiftUp++;
             }
             this.newEntries.add(s);
         }
-        Handler.repaint(x,y,width,height);
+        Handler.repaint(x, y, width, height);
     }
 }

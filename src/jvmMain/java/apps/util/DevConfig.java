@@ -43,6 +43,7 @@ public class DevConfig {
     public static int maxParticles = 100;
     public static int portButtonHeight = 20;
     public static int maxCommandLogSize = 3000;
+    public static int maxLogEntryLength = 300;
 
     //endregion
     public static long outOfPacketMessageTimeout = 1000;
