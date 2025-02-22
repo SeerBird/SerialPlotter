@@ -3,6 +3,7 @@ package apps;
 import apps.ui.Menu;
 import apps.ui.rectangles.Plot;
 import apps.util.DevConfig;
+import apps.util.GFormatter;
 import com.fazecast.jSerialComm.*;
 import org.ejml.simple.SimpleMatrix;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +12,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class PortTester {
@@ -24,6 +27,38 @@ public class PortTester {
     private static final Float dt = 0.1F;
 
     public static void start() {
+        //region set up my logger
+        Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+
+        ConsoleHandler console = new ConsoleHandler();
+        GFormatter formatter = new GFormatter();
+        //region file logger
+        /*
+        FileHandler fileTxt;
+        try {
+            fileTxt = new FileHandler(Util.path + "SerialLog%u.%g.txt", true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        fileTxt.setFormatter(formatter);
+        fileTxt.setLevel(Level.INFO);
+        logger.addHandler(fileTxt);
+         */
+        //endregion
+        console.setFormatter(formatter);
+        console.setLevel(Level.INFO);
+
+
+        logger.addHandler(console);
+        //endregion
+        //region silence default console
+
+        Logger rootLogger = Logger.getLogger("");
+        java.util.logging.Handler[] handlers = rootLogger.getHandlers();
+        if (handlers[0] instanceof ConsoleHandler) {
+            rootLogger.removeHandler(handlers[0]);
+        }
+        //endregion
         state.set(0, 200);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         SerialPort[] ports = SerialPort.getCommPorts();
@@ -67,8 +102,8 @@ public class PortTester {
                             "}"
             ).getBytes(StandardCharsets.UTF_8);
             //byte[] buf = ("sin1:"+ sin1+";").getBytes(StandardCharsets.UTF_8);
-
             port.writeBytes(buf, buf.length);
+            logger.info("Tester sending shit");
         }, 8, 10, TimeUnit.MILLISECONDS);
         /*
         scheduler.scheduleAtFixedRate(() -> {

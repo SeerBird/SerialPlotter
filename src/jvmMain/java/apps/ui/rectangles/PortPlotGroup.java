@@ -9,6 +9,7 @@ import apps.util.DevConfig;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import com.fazecast.jSerialComm.SerialPortMessageListener;
+import com.sun.tools.attach.AttachOperationFailedException;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
@@ -30,7 +31,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
     long lastReceivedTime;
     final HashMap<ScheduledExecutorService, Boolean> timeoutFlags = new HashMap<>();
 
-    public PortPlotGroup(int x, int y, int width, int height, @NotNull SerialPort port) throws TimeoutException {
+    public PortPlotGroup(int x, int y, int width, int height, @NotNull SerialPort port) throws TimeoutException, ExecutionException, DataListenerAttachException {
         super(x, y, width, height);
         plots = new HashMap<>();
         newPlots = new HashMap<>();
@@ -64,7 +65,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
             throw new TimeoutException("Timed out opening port");
         } catch (ExecutionException e) {
             logger.info("Exception opening port: " + e.getCause());
-            Menu.log("Exception opening port: " + e.getCause());
+            throw new ExecutionException("Exception opening port: " + e.getMessage(), e.getCause());
         }
         if (!res) {
             logger.info("plotter failed to open");
@@ -74,16 +75,21 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
             Menu.log("Opened " + port.getDescriptivePortName());
         }
         try {
-            res = Handler.timeout(() -> port.addDataListener(this), 1000);
+            res = Handler.timeout(() -> {
+                port.flushDataListener();
+                port.flushIOBuffers();
+                port.removeDataListener();
+                return port.addDataListener(this);
+            }, 1000);
         } catch (TimeoutException e) {
             throw new TimeoutException("Timed out attaching listener to port");
         } catch (ExecutionException e) {
             logger.info("Exception attaching listener: " + e.getCause());
-            Menu.log("Exception attaching listener: " + e.getCause());
+            throw new ExecutionException("Exception attaching listener: " + e.getMessage(), e.getCause());
         }
         if (!res) {
             logger.info("plotter failed to listen");
-            Menu.log("Failed to attach listener");
+            throw new DataListenerAttachException("Failed to attach listener");
         } else {
             logger.info("Listening to " + port.getDescriptivePortName());
             Menu.log("Listening to  " + port.getDescriptivePortName());
@@ -293,5 +299,12 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
         Menu.log("Stopped listening to " + port.getDescriptivePortName());
         port.closePort();
         Menu.log("Closed " + port.getDescriptivePortName());
+    }
+
+    public static class DataListenerAttachException extends Exception {
+
+        public DataListenerAttachException(String message) {
+            super(message);
+        }
     }
 }

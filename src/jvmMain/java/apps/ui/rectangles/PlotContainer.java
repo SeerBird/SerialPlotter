@@ -10,6 +10,7 @@ import com.fazecast.jSerialComm.SerialPort;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
@@ -53,8 +54,12 @@ public class PlotContainer extends RectElement {
             }
             portPlotGroups.clear();
             try {
-                portPlotGroups.add(new PortPlotGroup(x, y, width, height, port)); // make them stack later maybe?
+                portPlotGroups.add(new PortPlotGroup(x, y, width, height, port));
             } catch (TimeoutException e) {
+                Menu.log(e.getMessage());
+            } catch(ExecutionException e){
+                Menu.log(e.getMessage());
+            } catch(PortPlotGroup.DataListenerAttachException e){
                 Menu.log(e.getMessage());
             }
         } catch (Exception e) {

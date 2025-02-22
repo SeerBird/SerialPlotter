@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DevConfig {
-    public static final int DWIDTH = 1280;
+    public static final int DWIDTH = 1140;
     public static final int DHEIGHT = 600;
     public static final int maxLogSize = 10000;
     public static final int maxPlotEntries = 10000; // should be >=defaultRange
