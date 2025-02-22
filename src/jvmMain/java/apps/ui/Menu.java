@@ -13,6 +13,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class Menu {
@@ -34,6 +38,7 @@ public class Menu {
     private static Integer middleOrigin;
     private static final ArrayList<String> commandLog = new ArrayList<>();
     private static int commandID = 0;
+    private static boolean waiting = false;
     private static final Thread onShutdown = new Thread(() -> {
         for (PortPlotGroup port : plotContainer.getPortPlotGroups()) {
             port.close();
@@ -53,6 +58,7 @@ public class Menu {
 
     //region Update Contents
     public static synchronized void update() {
+        try{
         //region resize and arrange everything
         int width = Handler.getWindow().getWidth();
         int height = Handler.getWindow().getHeight();
@@ -81,7 +87,10 @@ public class Menu {
         commandLine.y = height - commandLine.height;
         plotContainer.height = height;
         //endregion
-        plotContainer.update();
+        plotContainer.update();}
+        catch(Exception e){
+            logger.info(e.getMessage());
+        }
     }
 
     private static void sendCommand(String command) {
@@ -168,6 +177,10 @@ public class Menu {
 
     public static boolean release() {
         if (pressed != null) {
+            if(waiting){
+                Menu.log("Still waiting!");
+                return false;
+            }
             pressed.release();
             pressed = null;
             return true;
@@ -240,6 +253,14 @@ public class Menu {
     private static void savePreset(ProgramState state, IElement... presetElements) {
         menuPresets.put(state, new ArrayList<>(List.of(presetElements)));
         elements.clear();
+    }
+
+    public static void pause(int maxMillis) {
+        waiting = true;
+        Handler.getScheduler().schedule(() -> waiting = false, maxMillis, TimeUnit.MILLISECONDS);
+    }
+    public static void unpause(){
+        waiting = false;
     }
 
 

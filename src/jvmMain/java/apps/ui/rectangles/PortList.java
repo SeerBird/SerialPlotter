@@ -18,7 +18,7 @@ public class PortList extends RectElement {
     public PortList(int x, int y, int width, int height) {
         super(x, y, width, height);
 
-        Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+        Handler.getScheduler().scheduleAtFixedRate(() -> {
             SerialPort[] ports = Handler.getPorts();
             if (ports.length != lastPorts.length) {
                 lastPorts = ports;
@@ -26,39 +26,43 @@ public class PortList extends RectElement {
                 Menu.update();
                 return;
             }
-            if (ports.length == 0){
+            if (ports.length == 0) {
                 Menu.log("No ports found!");
             }
         }, 8, DevConfig.portListRefreshPeriod, TimeUnit.MILLISECONDS);
     }
 
     public void updatePorts() {
-        if (hovered) {
-            return; //don't move under the cursor.
-        }
-        this.portButtons.clear();
-        int topY = y;
-        for (SerialPort port : Handler.getPorts()) {
-            this.portButtons.add(new Button(x, topY, width, DevConfig.fontSize + DevConfig.vertMargin * 2,
-                    () -> {
-                        updatePorts(); // commodification?
-                        Menu.addPortPlotGroup(port);
-                    }, port.getDescriptivePortName(), DevConfig.text));
-            topY += DevConfig.fontSize + DevConfig.vertMargin * 2;
+        synchronized (portButtons) {
+            if (hovered) {
+                return; //don't move under the cursor.
+            }
+            this.portButtons.clear();
+            int topY = y;
+            for (SerialPort port : Handler.getPorts()) {
+                this.portButtons.add(new Button(x, topY, width, DevConfig.fontSize + DevConfig.vertMargin * 2,
+                        () -> {
+                            //updatePorts(); // commodification?
+                            Menu.addPortPlotGroup(port);
+                        }, port.getDescriptivePortName(), DevConfig.text));
+                topY += DevConfig.fontSize + DevConfig.vertMargin * 2;
+            }
         }
     }
 
     public void updateButtons() {
-        int topY = y;
-        for (Button button : portButtons) {
-            button.x = x;
-            button.y = topY;
-            button.width = width;
-            button.height = DevConfig.fontSize + DevConfig.vertMargin * 2;
-            topY += DevConfig.fontSize + DevConfig.vertMargin * 2;
+        synchronized (portButtons) {
+            int topY = y;
+            for (Button button : portButtons) {
+                button.x = x;
+                button.y = topY;
+                button.width = width;
+                button.height = DevConfig.fontSize + DevConfig.vertMargin * 2;
+                topY += DevConfig.fontSize + DevConfig.vertMargin * 2;
+            }
+            height = topY - y;
+            Handler.repaint(x, y, width, height);
         }
-        height = topY - y;
-        Handler.repaint(x, y, width, height);
     }
 
     @Override

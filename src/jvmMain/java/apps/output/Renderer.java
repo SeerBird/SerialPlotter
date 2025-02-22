@@ -32,7 +32,7 @@ public class Renderer {
     static int height = 0;
 
     public static void start() {
-        Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+        Handler.getScheduler().scheduleAtFixedRate(() -> {
             synchronized (animations) {
                 for (Animation ani : animations) {
                     ani.next();

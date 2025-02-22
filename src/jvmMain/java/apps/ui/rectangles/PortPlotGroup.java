@@ -29,9 +29,9 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
     IElement pressed;
     String leftover;
     long lastReceivedTime;
-    final HashMap<ScheduledExecutorService, Boolean> timeoutFlags = new HashMap<>();
+    final HashMap<Integer, Boolean> timeoutFlags = new HashMap<>();
 
-    public PortPlotGroup(int x, int y, int width, int height, @NotNull SerialPort port) throws TimeoutException, ExecutionException, DataListenerAttachException {
+    public PortPlotGroup(int x, int y, int width, int height, @NotNull SerialPort port) {
         super(x, y, width, height);
         plots = new HashMap<>();
         newPlots = new HashMap<>();
@@ -43,63 +43,95 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
             Thread task = new Thread(() -> {
                 boolean res = false;
                 try {
-                    res = port.setBaudRate(Integer.parseInt(rate));
+                    res = Handler.timeout(() -> port.setBaudRate(Integer.parseInt(rate)), 1000);
                 } catch (NumberFormatException e) {
                     Audio.playSound(Sound.stopPls);
-                    Menu.log("Couldn't change baudrate to rate");
+                    logger.info("Couldn't change baudrate: is this a number?");
+                    Menu.log("Couldn't change baudrate: is this a number?");
+                    return;
+                } catch (ExecutionException e) {
+                    logger.info("Couldn't change baudrate");
+                    Menu.log("Couldn't change baudrate");
+                    return;
+                } catch (TimeoutException e) {
+                    logger.info("Timed out changing baudrate");
+                    Menu.log("Timed out changing baudrate");
                     return;
                 }
                 if (res) {
+                    logger.info("Changed baudrate to " + rate);
                     Menu.log("Changed baudrate to " + rate);
                 } else {
+                    logger.info("Baudrate " + rate + " not allowed on this system");
                     Menu.log("Baudrate " + rate + " not allowed on this system");
                 }
             });
             task.start();
         }, DevConfig.text, true);
         //region connect to port
-        boolean res = false;
-        try {
-            res = Handler.timeout(port::openPort, 1000);
-        } catch (TimeoutException e) {
-            throw new TimeoutException("Timed out opening port");
-        } catch (ExecutionException e) {
-            logger.info("Exception opening port: " + e.getCause());
-            throw new ExecutionException("Exception opening port: " + e.getMessage(), e.getCause());
-        }
-        if (!res) {
-            logger.info("plotter failed to open");
-            Menu.log("Failed to open port");
-        } else {
-            logger.info("Opened " + port.getDescriptivePortName());
-            Menu.log("Opened " + port.getDescriptivePortName());
-        }
-        try {
-            res = Handler.timeout(() -> {
-                port.flushDataListener();
-                port.flushIOBuffers();
-                port.removeDataListener();
-                return port.addDataListener(this);
-            }, 1000);
-        } catch (TimeoutException e) {
-            throw new TimeoutException("Timed out attaching listener to port");
-        } catch (ExecutionException e) {
-            logger.info("Exception attaching listener: " + e.getCause());
-            throw new ExecutionException("Exception attaching listener: " + e.getMessage(), e.getCause());
-        }
-        if (!res) {
-            logger.info("plotter failed to listen");
-            throw new DataListenerAttachException("Failed to attach listener");
-        } else {
-            logger.info("Listening to " + port.getDescriptivePortName());
-            Menu.log("Listening to  " + port.getDescriptivePortName());
-        }
+        Thread task = new Thread(() -> {
+            Menu.pause(3000);
+            boolean opening = false;
+            boolean listening = false;
+            try {
+                opening = Handler.timeout(port::openPort, 1000);
+            } catch (TimeoutException e) {
+                logger.info("Timed out opening port");
+                Menu.log("Timed out opening port");
+            } catch (ExecutionException e) {
+                logger.info("Exception opening port: " + e.getMessage());
+                Menu.log("Exception opening port: " + e.getMessage());
+            }
+            if (!opening) {
+                logger.info("Failed to open port");
+                Menu.log("Failed to open port");
+            } else {
+                logger.info("Opened " + port.getDescriptivePortName());
+                Menu.log("Opened " + port.getDescriptivePortName());
+            }
+            try {
+                listening = Handler.timeout(() -> {
+                    port.flushDataListener();
+                    port.flushIOBuffers();
+                    port.removeDataListener();
+                    return port.addDataListener(this);
+                }, 1000);
+            } catch (TimeoutException e) {
+                logger.info("Timed out attaching listener to port");
+                Menu.log("Timed out attaching listener to port");
+            } catch (ExecutionException e) {
+                logger.info("Exception attaching listener: " + e.getMessage());
+                Menu.log("Exception attaching listener: " + e.getMessage());
+            }
+            if (!listening) {
+                logger.info("Failed to attach listener");
+                Menu.log("Failed to attach listener");
+            } else {
+                logger.info("Listening to  " + port.getDescriptivePortName());
+                Menu.log("Listening to  " + port.getDescriptivePortName());
+            }
+            if (!listening) {
+                Menu.removePortPlotGroup(this);
+            }
+            Menu.unpause();
+        });
+        task.start();
         //endregion
         //region close button
         PortPlotGroup ref = this;
         closeButton = new Button(x, y, width, height, () -> {
-            Thread task = new Thread(this::close);
-            task.start();
+            Thread closeTask = new Thread(() -> {
+                try {
+                    Handler.timeout(this::close, 1000);
+                } catch (ExecutionException e) {
+                    logger.info("Exception closing "+port.getDescriptivePortName());
+                    Menu.log("Exception closing "+port.getDescriptivePortName());
+                } catch (TimeoutException e) {
+                    logger.info("Timed out closing "+port.getDescriptivePortName());
+                    Menu.log("Timed out closing "+port.getDescriptivePortName());
+                }
+            });
+            closeTask.start();
             Menu.removePortPlotGroup(ref);
         }, "X", DevConfig.text);
         //endregion
@@ -126,15 +158,19 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                     timeoutFlags.replaceAll((s, v) -> true);
                     if ((!message.contains("{"))) {
                         leftover = message;
-                        final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-                        timeoutFlags.put(scheduler, false);
-                        scheduler.schedule(() -> {
+                        int uniqueIndex = 0;
+                        while(timeoutFlags.containsKey(uniqueIndex)){
+                            uniqueIndex++;
+                        }
+                        timeoutFlags.put(uniqueIndex, false);
+                        int finalUniqueIndex = uniqueIndex;
+                        Handler.getScheduler().schedule(() -> {
                             synchronized (timeoutFlags) {
-                                if (!timeoutFlags.get(scheduler)) {
+                                if (!timeoutFlags.get(finalUniqueIndex)) {
                                     Menu.log(leftover);
                                     leftover = "";
                                 }
-                                timeoutFlags.remove(scheduler);
+                                timeoutFlags.remove(finalUniqueIndex);
                             }
                         }, 100, TimeUnit.MILLISECONDS);
                         break; //nothing left to read
@@ -212,17 +248,23 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                     //endregion
                 }
                 //endregion
-                if (plotAdded) {
+                boolean plotAddedFinal = plotAdded;
+                Thread task = new Thread(()->{
+                    if (plotAddedFinal) {
                     Menu.update();
-                }
-                Handler.repaint();
+                    Handler.repaint();
+                }});
+                task.start();
                 break;
             // endregion
             case SerialPort.LISTENING_EVENT_PORT_DISCONNECTED:
-                port.closePort();
-                Menu.removePortPlotGroup(this);
-                logger.info("Port " + port.getDescriptivePortName() + " disconnected.");
-                Menu.log("Port " + port.getDescriptivePortName() + " disconnected.");
+                Thread disconnectTask = new Thread(()->{
+                    port.closePort();
+                    Menu.removePortPlotGroup(this);
+                    logger.info("Port " + port.getDescriptivePortName() + " disconnected.");
+                    Menu.log("Port " + port.getDescriptivePortName() + " disconnected.");
+                });
+                disconnectTask.start();
                 break;
             default:
                 logger.info("Unexpected event type: " + event.getEventType());
@@ -294,11 +336,16 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
         newPlots.clear();
     }
 
-    public void close() {
+    public boolean close() {
         port.removeDataListener();
         Menu.log("Stopped listening to " + port.getDescriptivePortName());
-        port.closePort();
-        Menu.log("Closed " + port.getDescriptivePortName());
+        boolean res = port.closePort();
+        if (res) {
+            Menu.log("Closed " + port.getDescriptivePortName());
+        } else {
+            Menu.log("Failed to close " + port.getDescriptivePortName());
+        }
+        return res;
     }
 
     public static class DataListenerAttachException extends Exception {

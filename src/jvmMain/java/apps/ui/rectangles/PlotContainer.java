@@ -10,13 +10,12 @@ import com.fazecast.jSerialComm.SerialPort;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.logging.Logger;
 
 public class PlotContainer extends RectElement {
     private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    ArrayList<PortPlotGroup> portPlotGroups = new ArrayList<>();
+    final ArrayList<PortPlotGroup> portPlotGroups = new ArrayList<>();
     PortPlotGroup pressed;
     ArrayList<Amogus> amogi;
 
@@ -49,19 +48,16 @@ public class PlotContainer extends RectElement {
 
     public void addPortPlotGroup(SerialPort port) { // turns out there will only be one. who needs to change code, right?
         try {
-            if (portPlotGroups.size() == 1) {
-                portPlotGroups.get(0).close();
-            }
-            portPlotGroups.clear();
-            try {
+            ScheduledFuture<?> future = Handler.getScheduler().schedule(() -> logger.info("We're fucked!"), 1500, TimeUnit.MILLISECONDS);
+            synchronized (portPlotGroups) {
+                if (portPlotGroups.size() == 1) {
+                    portPlotGroups.get(0).close();
+                }
+                portPlotGroups.clear();
                 portPlotGroups.add(new PortPlotGroup(x, y, width, height, port));
-            } catch (TimeoutException e) {
-                Menu.log(e.getMessage());
-            } catch(ExecutionException e){
-                Menu.log(e.getMessage());
-            } catch(PortPlotGroup.DataListenerAttachException e){
-                Menu.log(e.getMessage());
             }
+            future.cancel(true);
+
         } catch (Exception e) {
             logger.info(e.getMessage());
             Menu.log(e.getMessage());
@@ -71,9 +67,11 @@ public class PlotContainer extends RectElement {
     }
 
     public void removePortPlotGroup(PortPlotGroup plot) {
-        portPlotGroups.remove(plot);
-        removeAmogi();
-        Handler.repaint(x, y, width, height);
+        synchronized (portPlotGroups) {
+            portPlotGroups.remove(plot);
+            removeAmogi();
+            Handler.repaint(x, y, width, height);
+        }
     }
 
     public ArrayList<PortPlotGroup> getPortPlotGroups() {
@@ -85,11 +83,18 @@ public class PlotContainer extends RectElement {
     }
 
     public void update() {
+        ScheduledFuture<?> future = Handler.getScheduler().schedule(() -> {
+            logger.info("We're fucked!");
+        }, 1500, TimeUnit.MILLISECONDS);
         //try to make the tiling match the width and height we have?
         if (portPlotGroups.isEmpty()) {
+            future.cancel(true);
             return;
         }
-        PortPlotGroup port = portPlotGroups.get(0);
+        PortPlotGroup port;
+        synchronized (portPlotGroups) {
+            port = portPlotGroups.get(0);
+        }
         Button close = port.closeButton;
         close.width = DevConfig.fontSize + DevConfig.vertMargin * 2;
         close.height = DevConfig.fontSize + DevConfig.vertMargin * 2;
@@ -151,6 +156,7 @@ public class PlotContainer extends RectElement {
         }
         //endregion
         Handler.repaint(x, y, width, height);
+        future.cancel(true);
     }
 
     private void removeAmogi() {

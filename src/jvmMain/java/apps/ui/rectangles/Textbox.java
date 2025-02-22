@@ -46,7 +46,7 @@ public class Textbox extends Label implements Focusable {
             cursorAnimation.cancel(true);
         }
         cursor = false;
-        cursorAnimation = Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+        cursorAnimation = Handler.getScheduler().scheduleAtFixedRate(() -> {
             cursor ^= true;
             Handler.repaint(x, y, width, height);
         }, 0, 600, TimeUnit.MILLISECONDS);

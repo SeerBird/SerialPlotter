@@ -44,8 +44,10 @@ public class Handler {
 
         Logger rootLogger = Logger.getLogger("");
         java.util.logging.Handler[] handlers = rootLogger.getHandlers();
-        if (handlers[0] instanceof ConsoleHandler) {
-            rootLogger.removeHandler(handlers[0]);
+        if (handlers.length > 0) {
+            if (handlers[0] instanceof ConsoleHandler) {
+                rootLogger.removeHandler(handlers[0]);
+            }
         }
         //endregion
     }
@@ -54,6 +56,7 @@ public class Handler {
     private static ProgramState state;
     static final AppWindow window = new AppWindow();
     static final InputInfo input = new InputInfo();
+    static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
     static boolean bullshitOn = false;
     private final static Thread onShutdown = new Thread(() -> {
 
@@ -121,6 +124,10 @@ public class Handler {
 
     public static boolean getBullshitOn() {
         return bullshitOn;
+    }
+
+    public static ScheduledExecutorService getScheduler() {
+        return scheduler;
     }
 
     public static ProgramState getState() {
