@@ -60,7 +60,6 @@ public class PortTester {
         }
         //endregion
         state.set(0, 200);
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         SerialPort[] ports = SerialPort.getCommPorts();
         SerialPort port = ports[1];
         port.setBaudRate(115200);
@@ -86,7 +85,7 @@ public class PortTester {
                 }
             }
         });
-        scheduler.scheduleAtFixedRate(() -> {
+        Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
             SimpleMatrix delta = generator.mult(state).divide(1000);
             state = state.plus(delta);
             time = (time + dt) % 200;
@@ -102,8 +101,8 @@ public class PortTester {
                             "}"
             ).getBytes(StandardCharsets.UTF_8);
             //byte[] buf = ("sin1:"+ sin1+";").getBytes(StandardCharsets.UTF_8);
-            port.writeBytes(buf, buf.length);
-            logger.info("Tester sending shit");
+            int length = port.writeBytes(buf, buf.length);
+            logger.info("Tester sending shit: "+length+" bytes");
         }, 8, 10, TimeUnit.MILLISECONDS);
         /*
         scheduler.scheduleAtFixedRate(() -> {

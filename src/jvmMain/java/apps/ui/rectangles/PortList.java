@@ -20,26 +20,25 @@ public class PortList extends RectElement {
 
         Handler.getScheduler().scheduleAtFixedRate(() -> {
             SerialPort[] ports = Handler.getPorts();
-            if (ports.length != lastPorts.length) {
-                lastPorts = ports;
-                updatePorts();
-                Menu.update();
-                return;
-            }
             if (ports.length == 0) {
                 Menu.log("No ports found!");
+                return;
             }
+            lastPorts = ports;
+            updatePorts(ports);
+            Menu.update();
+            Handler.repaint(x,y,width,height);
         }, 8, DevConfig.portListRefreshPeriod, TimeUnit.MILLISECONDS);
     }
 
-    public void updatePorts() {
+    public void updatePorts(SerialPort[] ports) {
         synchronized (portButtons) {
             if (hovered) {
                 return; //don't move under the cursor.
             }
             this.portButtons.clear();
             int topY = y;
-            for (SerialPort port : Handler.getPorts()) {
+            for (SerialPort port : ports) {
                 this.portButtons.add(new Button(x, topY, width, DevConfig.fontSize + DevConfig.vertMargin * 2,
                         () -> {
                             //updatePorts(); // commodification?

@@ -69,53 +69,50 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
             task.start();
         }, DevConfig.text, true);
         //region connect to port
-        Thread task = new Thread(() -> {
-            Menu.pause(3000);
-            boolean opening = false;
-            boolean listening = false;
-            try {
-                opening = Handler.timeout(port::openPort, 1000);
-            } catch (TimeoutException e) {
-                logger.info("Timed out opening port");
-                Menu.log("Timed out opening port");
-            } catch (ExecutionException e) {
-                logger.info("Exception opening port: " + e.getMessage());
-                Menu.log("Exception opening port: " + e.getMessage());
-            }
-            if (!opening) {
-                logger.info("Failed to open port");
-                Menu.log("Failed to open port");
-            } else {
-                logger.info("Opened " + port.getDescriptivePortName());
-                Menu.log("Opened " + port.getDescriptivePortName());
-            }
-            try {
-                listening = Handler.timeout(() -> {
-                    port.flushDataListener();
-                    port.flushIOBuffers();
-                    port.removeDataListener();
-                    return port.addDataListener(this);
-                }, 1000);
-            } catch (TimeoutException e) {
-                logger.info("Timed out attaching listener to port");
-                Menu.log("Timed out attaching listener to port");
-            } catch (ExecutionException e) {
-                logger.info("Exception attaching listener: " + e.getMessage());
-                Menu.log("Exception attaching listener: " + e.getMessage());
-            }
-            if (!listening) {
-                logger.info("Failed to attach listener");
-                Menu.log("Failed to attach listener");
-            } else {
-                logger.info("Listening to  " + port.getDescriptivePortName());
-                Menu.log("Listening to  " + port.getDescriptivePortName());
-            }
-            if (!listening) {
-                Menu.removePortPlotGroup(this);
-            }
-            Menu.unpause();
-        });
-        task.start();
+        Menu.pause(3000);
+        boolean opening = false;
+        boolean listening = false;
+        try {
+            opening = Handler.timeout(port::openPort, 1000);
+        } catch (TimeoutException e) {
+            logger.info("Timed out opening port");
+            Menu.log("Timed out opening port");
+        } catch (ExecutionException e) {
+            logger.info("Exception opening port: " + e.getMessage());
+            Menu.log("Exception opening port: " + e.getMessage());
+        }
+        if (!opening) {
+            logger.info("Failed to open port");
+            Menu.log("Failed to open port");
+        } else {
+            logger.info("Opened " + port.getDescriptivePortName());
+            Menu.log("Opened " + port.getDescriptivePortName());
+        }
+        try {
+            listening = Handler.timeout(() -> {
+                port.flushDataListener();
+                port.flushIOBuffers();
+                port.removeDataListener();
+                return port.addDataListener(this);
+            }, 1000);
+        } catch (TimeoutException e) {
+            logger.info("Timed out attaching listener to port");
+            Menu.log("Timed out attaching listener to port");
+        } catch (ExecutionException e) {
+            logger.info("Exception attaching listener: " + e.getMessage());
+            Menu.log("Exception attaching listener: " + e.getMessage());
+        }
+        if (!listening) {
+            logger.info("Failed to attach listener");
+            Menu.log("Failed to attach listener");
+        } else {
+            logger.info("Listening to  " + port.getDescriptivePortName());
+            Menu.log("Listening to  " + port.getDescriptivePortName());
+        }
+        if (!listening) {
+            Menu.removePortPlotGroup(this);
+        }
+        Menu.unpause();
         //endregion
         //region close button
         PortPlotGroup ref = this;
@@ -124,11 +121,11 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                 try {
                     Handler.timeout(this::close, 1000);
                 } catch (ExecutionException e) {
-                    logger.info("Exception closing "+port.getDescriptivePortName());
-                    Menu.log("Exception closing "+port.getDescriptivePortName());
+                    logger.info("Exception closing " + port.getDescriptivePortName());
+                    Menu.log("Exception closing " + port.getDescriptivePortName());
                 } catch (TimeoutException e) {
-                    logger.info("Timed out closing "+port.getDescriptivePortName());
-                    Menu.log("Timed out closing "+port.getDescriptivePortName());
+                    logger.info("Timed out closing " + port.getDescriptivePortName());
+                    Menu.log("Timed out closing " + port.getDescriptivePortName());
                 }
             });
             closeTask.start();
@@ -141,134 +138,142 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
     //region Serial
     @Override
     public void serialEvent(@NotNull SerialPortEvent event) {
-        switch (event.getEventType()) {
-            // region data available
-            case SerialPort.LISTENING_EVENT_DATA_AVAILABLE:
-                if (System.nanoTime() - lastReceivedTime < DevConfig.messageReceivePeriod * 1000000) {
-                    return;
-                }
-                lastReceivedTime = System.nanoTime();
-                byte[] buf = new byte[port.bytesAvailable()];
-                int numRead = port.readBytes(buf, buf.length);
-                boolean plotAdded = false;
-                String message = leftover + new String(buf, StandardCharsets.UTF_8);
-                leftover = "";
-                //region read message
-                while (true) {
-                    timeoutFlags.replaceAll((s, v) -> true);
-                    if ((!message.contains("{"))) {
-                        leftover = message;
-                        int uniqueIndex = 0;
-                        while(timeoutFlags.containsKey(uniqueIndex)){
-                            uniqueIndex++;
-                        }
-                        timeoutFlags.put(uniqueIndex, false);
-                        int finalUniqueIndex = uniqueIndex;
-                        Handler.getScheduler().schedule(() -> {
-                            synchronized (timeoutFlags) {
-                                if (!timeoutFlags.get(finalUniqueIndex)) {
-                                    Menu.log(leftover);
-                                    leftover = "";
-                                }
-                                timeoutFlags.remove(finalUniqueIndex);
-                            }
-                        }, 100, TimeUnit.MILLISECONDS);
-                        break; //nothing left to read
+        ScheduledFuture<?> future = Handler.getScheduler().schedule(() -> {
+            logger.info("We're fucked!");
+        }, 1500, TimeUnit.MILLISECONDS);
+        try {
+            switch (event.getEventType()) {
+                // region data available
+                case SerialPort.LISTENING_EVENT_DATA_AVAILABLE:
+                    if (System.nanoTime() - lastReceivedTime < DevConfig.messageReceivePeriod * 1000000) {
+                        return;
                     }
-                    //region log text that is between packets(is this sane?)
-                    String outsideOfPacket = message.substring(0, message.indexOf("{"));
-                    if (!outsideOfPacket.isEmpty()) {
-                        Menu.log('"' + outsideOfPacket + '"');
-                        message = message.substring(message.indexOf("{"));
-                    }
-                    //endregion
-                    if (!message.contains("}")) {
-                        leftover = message;
-                        break; //nothing left to read
-                    }
-                    String packet = message.substring(1, message.indexOf("}")); // plotName(key:value,key:value)plotName(key:value,key:value)
-                    message = message.substring(message.indexOf("}") + 1); // will this break if the message ends with "}"?
-                    //region read packet
+                    lastReceivedTime = System.nanoTime();
+                    byte[] buf = new byte[port.bytesAvailable()];
+                    int numRead = port.readBytes(buf, buf.length);
+                    boolean plotAdded = false;
+                    String message = leftover + new String(buf, StandardCharsets.UTF_8);
+                    leftover = "";
+                    //region read message
                     while (true) {
-                        if (!packet.contains("(")) {
-                            if (!packet.isEmpty()) {
-                                logger.info("Leftovers in packet: " + packet);
-                                Menu.log("Leftovers in packet: " + packet);
+                        timeoutFlags.replaceAll((s, v) -> true);
+                        if ((!message.contains("{"))) {
+                            leftover = message;
+                            int uniqueIndex = 0;
+                            while (timeoutFlags.containsKey(uniqueIndex)) {
+                                uniqueIndex++;
                             }
-                            break;
+                            timeoutFlags.put(uniqueIndex, false);
+                            int finalUniqueIndex = uniqueIndex;
+                            Handler.getScheduler().schedule(() -> {
+                                synchronized (timeoutFlags) {
+                                    if (!timeoutFlags.get(finalUniqueIndex)) {
+                                        Menu.log(leftover);
+                                        leftover = "";
+                                    }
+                                    timeoutFlags.remove(finalUniqueIndex);
+                                }
+                            }, 100, TimeUnit.MILLISECONDS);
+                            break; //nothing left to read
                         }
-                        String plotName = packet.substring(0, packet.indexOf("(")); // is "" an ok plot name? prolly.
-                        Plot plot = plots.get(plotName);
-                        //region create plot if absent
-                        if (plot == null) {
-                            plot = newPlots.get(plotName);
-                            if (plot == null) {
-                                plot = new Plot(0, 0, width, height, plotName);
-                                newPlots.put(plotName, plot);
-                                plotAdded = true;
-                            }
+                        //region log text that is between packets(is this sane?)
+                        String outsideOfPacket = message.substring(0, message.indexOf("{"));
+                        if (!outsideOfPacket.isEmpty()) {
+                            Menu.log('"' + outsideOfPacket + '"');
+                            message = message.substring(message.indexOf("{"));
                         }
                         //endregion
-                        packet = packet.substring(packet.indexOf("("));
-                        if (!packet.contains(")")) {
-                            logger.info("Unclosed (: " + plotName + packet);
-                            Menu.log("Unclosed (: " + plotName + packet);
-                            break;
+                        if (!message.contains("}")) {
+                            leftover = message;
+                            break; //nothing left to read
                         }
-                        String plotData = packet.substring(1, packet.indexOf(")")); // key:value,key:value
-                        packet = packet.substring(packet.indexOf(")") + 1);
-                        Menu.log(plotName + "(" + plotData + ")");
-                        plotData += ",";
-                        //region read plot data
-                        while (plotData.contains(",")) {
-                            //region read pair
-                            String pair = plotData.substring(0, plotData.indexOf(",")); //a:n
-                            plotData = plotData.substring(plotData.indexOf(",") + 1);
-                            if (!pair.contains(":")) {
-                                logger.info("Malformed pair: " + pair);
-                                continue; //discard this pair
+                        String packet = message.substring(1, message.indexOf("}")); // plotName(key:value,key:value)plotName(key:value,key:value)
+                        message = message.substring(message.indexOf("}") + 1); // will this break if the message ends with "}"?
+                        //region read packet
+                        while (true) {
+                            if (!packet.contains("(")) {
+                                if (!packet.isEmpty()) {
+                                    logger.info("Leftovers in packet: " + packet);
+                                    Menu.log("Leftovers in packet: " + packet);
+                                }
+                                break;
                             }
-                            String key = pair.substring(0, pair.indexOf(":"));
-                            String valueString = pair.substring(pair.indexOf(":") + 1);
-                            float value;
-                            try {
-                                value = Float.parseFloat(valueString);
-                            } catch (NumberFormatException e) {
-                                logger.info("Number format exception: " + valueString);
-                                continue; //discard this pair
+                            String plotName = packet.substring(0, packet.indexOf("(")); // is "" an ok plot name? prolly.
+                            Plot plot = plots.get(plotName);
+                            //region create plot if absent
+                            if (plot == null) {
+                                plot = newPlots.get(plotName);
+                                if (plot == null) {
+                                    plot = new Plot(0, 0, width, height, plotName);
+                                    newPlots.put(plotName, plot);
+                                    plotAdded = true;
+                                }
                             }
                             //endregion
-                            plot.addValue(key, value);
-                        }
-                        if (!plotData.isEmpty()) {
-                            Menu.log("Leftovers in plot data: " + plotData);
+                            packet = packet.substring(packet.indexOf("("));
+                            if (!packet.contains(")")) {
+                                logger.info("Unclosed (: " + plotName + packet);
+                                Menu.log("Unclosed (: " + plotName + packet);
+                                break;
+                            }
+                            String plotData = packet.substring(1, packet.indexOf(")")); // key:value,key:value
+                            packet = packet.substring(packet.indexOf(")") + 1);
+                            Menu.log(plotName + "(" + plotData + ")");
+                            plotData += ",";
+                            //region read plot data
+                            while (plotData.contains(",")) {
+                                //region read pair
+                                String pair = plotData.substring(0, plotData.indexOf(",")); //a:n
+                                plotData = plotData.substring(plotData.indexOf(",") + 1);
+                                if (!pair.contains(":")) {
+                                    logger.info("Malformed pair: " + pair);
+                                    continue; //discard this pair
+                                }
+                                String key = pair.substring(0, pair.indexOf(":"));
+                                String valueString = pair.substring(pair.indexOf(":") + 1);
+                                float value;
+                                try {
+                                    value = Float.parseFloat(valueString);
+                                } catch (NumberFormatException e) {
+                                    logger.info("Number format exception: " + valueString);
+                                    continue; //discard this pair
+                                }
+                                //endregion
+                                plot.addValue(key, value);
+                            }
+                            if (!plotData.isEmpty()) {
+                                Menu.log("Leftovers in plot data: " + plotData);
+                            }
+                            //endregion
                         }
                         //endregion
                     }
                     //endregion
-                }
-                //endregion
-                boolean plotAddedFinal = plotAdded;
-                Thread task = new Thread(()->{
-                    if (plotAddedFinal) {
-                    Menu.update();
-                    Handler.repaint();
-                }});
-                task.start();
-                break;
-            // endregion
-            case SerialPort.LISTENING_EVENT_PORT_DISCONNECTED:
-                Thread disconnectTask = new Thread(()->{
-                    port.closePort();
-                    Menu.removePortPlotGroup(this);
-                    logger.info("Port " + port.getDescriptivePortName() + " disconnected.");
-                    Menu.log("Port " + port.getDescriptivePortName() + " disconnected.");
-                });
-                disconnectTask.start();
-                break;
-            default:
-                logger.info("Unexpected event type: " + event.getEventType());
-                Menu.log("Unexpected event type: " + event.getEventType());
+                    boolean plotAddedFinal = plotAdded;
+                    Thread task = new Thread(() -> {
+                        if (plotAddedFinal) {
+                            Menu.update();
+                            Handler.repaint();
+                        }
+                    });
+                    task.start();
+                    break;
+                // endregion
+                case SerialPort.LISTENING_EVENT_PORT_DISCONNECTED:
+                    Thread disconnectTask = new Thread(() -> {
+                        port.closePort();
+                        Menu.removePortPlotGroup(this);
+                        logger.info("Port " + port.getDescriptivePortName() + " disconnected.");
+                        Menu.log("Port " + port.getDescriptivePortName() + " disconnected.");
+                    });
+                    disconnectTask.start();
+                    break;
+                default:
+                    logger.info("Unexpected event type: " + event.getEventType());
+                    Menu.log("Unexpected event type: " + event.getEventType());
+            }
+        } finally {
+            future.cancel(true);
         }
     }
 

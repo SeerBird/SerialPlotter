@@ -58,6 +58,7 @@ public class Menu {
 
     //region Update Contents
     public static synchronized void update() {
+        ScheduledFuture<?> future = Handler.getScheduler().schedule(() -> logger.info("We're fucked!"), 1500, TimeUnit.MILLISECONDS);
         try{
         //region resize and arrange everything
         int width = Handler.getWindow().getWidth();
@@ -90,6 +91,8 @@ public class Menu {
         plotContainer.update();}
         catch(Exception e){
             logger.info(e.getMessage());
+        }finally{
+            future.cancel(true);
         }
     }
 

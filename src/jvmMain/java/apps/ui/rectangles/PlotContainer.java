@@ -47,23 +47,25 @@ public class PlotContainer extends RectElement {
     //endregion
 
     public void addPortPlotGroup(SerialPort port) { // turns out there will only be one. who needs to change code, right?
-        try {
-            ScheduledFuture<?> future = Handler.getScheduler().schedule(() -> logger.info("We're fucked!"), 1500, TimeUnit.MILLISECONDS);
-            synchronized (portPlotGroups) {
-                if (portPlotGroups.size() == 1) {
-                    portPlotGroups.get(0).close();
+        Thread task = new Thread(() -> {
+            try {
+                ScheduledFuture<?> future = Handler.getScheduler().schedule(() -> logger.info("We're fucked!"), 1500, TimeUnit.MILLISECONDS);
+                synchronized (portPlotGroups) {
+                    if (portPlotGroups.size() == 1) {
+                        portPlotGroups.get(0).close();
+                    }
+                    portPlotGroups.clear();
+                    portPlotGroups.add(new PortPlotGroup(x, y, width, height, port));
                 }
-                portPlotGroups.clear();
-                portPlotGroups.add(new PortPlotGroup(x, y, width, height, port));
+                future.cancel(true);
+            } catch (Exception e) {
+                logger.info(e.getMessage());
+                Menu.log(e.getMessage());
             }
-            future.cancel(true);
-
-        } catch (Exception e) {
-            logger.info(e.getMessage());
-            Menu.log(e.getMessage());
-        }
-        Menu.update();
-        Handler.repaint(x, y, width, height);
+            Menu.update();
+            Handler.repaint(x, y, width, height);
+        });
+        task.start();
     }
 
     public void removePortPlotGroup(PortPlotGroup plot) {

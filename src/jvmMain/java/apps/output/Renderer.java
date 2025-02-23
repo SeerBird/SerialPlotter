@@ -214,7 +214,7 @@ public class Renderer {
     private static void drawPortList(@NotNull PortList portList) {
         g.setColor(DevConfig.BACKGROUND);
         g.fillRect(portList.x, portList.y, (portList).width, portList.height);
-        for (Button port : portList.portButtons) {
+        for (Button port : new ArrayList<>(portList.portButtons)) {
             drawButton(port);
         }
     }
