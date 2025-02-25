@@ -10,7 +10,7 @@ import java.util.ArrayList;
 
 public class TextArea extends RectElement implements Scrollable {
     public ArrayList<String> entries;
-    ArrayList<String> newEntries;
+    final ArrayList<String> newEntries = new ArrayList<>();
     int deltaVertShift;
     public int shiftUp;
     int deltaHorShift;
@@ -19,16 +19,17 @@ public class TextArea extends RectElement implements Scrollable {
     public TextArea(int x, int y, int width, int height) {
         super(x, y, width, height);
         entries = new ArrayList<>();
-        newEntries = new ArrayList<>();
         shiftUp = 0;
     }
 
     public void refresh() {
-        entries.addAll(newEntries);
+        synchronized (newEntries) {
+            entries.addAll(newEntries);
+            newEntries.clear();
+        }
         while (entries.size() > DevConfig.maxLogSize) {
             entries.remove(0);
         }
-        newEntries.clear();
         //region vertical shift
         shiftUp += deltaVertShift;
         deltaVertShift = 0;
@@ -69,17 +70,19 @@ public class TextArea extends RectElement implements Scrollable {
 
     public void log(@NotNull String string) { //called concurrently?
         String[] newEntries = string.split("\n");
-        for (String s : newEntries) {
-            if (this.newEntries.size() > DevConfig.maxLogSize) {
-                break;
+        synchronized (this.newEntries) {
+            for (String s : newEntries) {
+                if (this.newEntries.size() > DevConfig.maxLogSize) {
+                    break;
+                }
+                if (s.length() > DevConfig.maxLogEntryLength || s.isEmpty()) {
+                    continue;
+                }
+                if (shiftUp != 0) {
+                    shiftUp++;
+                }
+                this.newEntries.add(s);
             }
-            if (s.length() > DevConfig.maxLogEntryLength || s.isEmpty()) {
-                continue;
-            }
-            if (shiftUp != 0) {
-                shiftUp++;
-            }
-            this.newEntries.add(s);
         }
         Handler.repaint(x, y, width, height);
     }

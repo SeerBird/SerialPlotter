@@ -25,7 +25,8 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
     public Label title;
     public Textbox baudrate;
     HashMap<String, Plot> plots;
-    HashMap<String, Plot> newPlots;
+    final HashMap<String, Plot> newPlots = new HashMap<>();
+    ;
     IElement pressed;
     String leftover;
     long lastReceivedTime;
@@ -34,7 +35,6 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
     public PortPlotGroup(int x, int y, int width, int height, @NotNull SerialPort port) {
         super(x, y, width, height);
         plots = new HashMap<>();
-        newPlots = new HashMap<>();
         lastReceivedTime = 0;
         leftover = "";
         this.port = port;
@@ -69,7 +69,7 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
             task.start();
         }, DevConfig.text, true);
         //region connect to port
-        Menu.pause(3000);
+        Menu.pause(3000); // idk if this is even needed
         boolean opening = false;
         boolean listening = false;
         try {
@@ -117,18 +117,6 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
         //region close button
         PortPlotGroup ref = this;
         closeButton = new Button(x, y, width, height, () -> {
-            Thread closeTask = new Thread(() -> {
-                try {
-                    Handler.timeout(this::close, 1000);
-                } catch (ExecutionException e) {
-                    logger.info("Exception closing " + port.getDescriptivePortName());
-                    Menu.log("Exception closing " + port.getDescriptivePortName());
-                } catch (TimeoutException e) {
-                    logger.info("Timed out closing " + port.getDescriptivePortName());
-                    Menu.log("Timed out closing " + port.getDescriptivePortName());
-                }
-            });
-            closeTask.start();
             Menu.removePortPlotGroup(ref);
         }, "X", DevConfig.text);
         //endregion
@@ -156,14 +144,20 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                     leftover = "";
                     //region read message
                     while (true) {
-                        timeoutFlags.replaceAll((s, v) -> true);
+                        //region log text that is outside a packet after a timeout(100ms)
+                        synchronized (timeoutFlags) {
+                            timeoutFlags.replaceAll((s, v) -> true);
+                        }
                         if ((!message.contains("{"))) {
                             leftover = message;
                             int uniqueIndex = 0;
-                            while (timeoutFlags.containsKey(uniqueIndex)) {
-                                uniqueIndex++;
+                            synchronized (timeoutFlags) {
+                                while (timeoutFlags.containsKey(uniqueIndex)) {
+                                    uniqueIndex++;
+                                }
+                                timeoutFlags.put(uniqueIndex, false);
                             }
-                            timeoutFlags.put(uniqueIndex, false);
+
                             int finalUniqueIndex = uniqueIndex;
                             Handler.getScheduler().schedule(() -> {
                                 synchronized (timeoutFlags) {
@@ -176,7 +170,8 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                             }, 100, TimeUnit.MILLISECONDS);
                             break; //nothing left to read
                         }
-                        //region log text that is between packets(is this sane?)
+                        //endregion
+                        //region log text that is between packets
                         String outsideOfPacket = message.substring(0, message.indexOf("{"));
                         if (!outsideOfPacket.isEmpty()) {
                             Menu.log('"' + outsideOfPacket + '"');
@@ -202,11 +197,13 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                             Plot plot = plots.get(plotName);
                             //region create plot if absent
                             if (plot == null) {
-                                plot = newPlots.get(plotName);
-                                if (plot == null) {
-                                    plot = new Plot(0, 0, width, height, plotName);
-                                    newPlots.put(plotName, plot);
-                                    plotAdded = true;
+                                synchronized (newPlots) {
+                                    plot = newPlots.get(plotName);
+                                    if (plot == null) {
+                                        plot = new Plot(0, 0, width, height, plotName);
+                                        newPlots.put(plotName, plot);
+                                        plotAdded = true;
+                                    }
                                 }
                             }
                             //endregion
@@ -249,29 +246,23 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                         //endregion
                     }
                     //endregion
-                    boolean plotAddedFinal = plotAdded;
-                    Thread task = new Thread(() -> {
-                        if (plotAddedFinal) {
-                            Menu.update();
-                            Handler.repaint();
-                        }
-                    });
-                    task.start();
+                    if (plotAdded) {
+                        Menu.queueUpdate();
+                        Handler.repaint();
+                    }
                     break;
                 // endregion
                 case SerialPort.LISTENING_EVENT_PORT_DISCONNECTED:
-                    Thread disconnectTask = new Thread(() -> {
-                        port.closePort();
-                        Menu.removePortPlotGroup(this);
-                        logger.info("Port " + port.getDescriptivePortName() + " disconnected.");
-                        Menu.log("Port " + port.getDescriptivePortName() + " disconnected.");
-                    });
-                    disconnectTask.start();
+                    Menu.removePortPlotGroup(this);
+                    logger.info("Port " + port.getDescriptivePortName() + " disconnected.");
+                    Menu.log("Port " + port.getDescriptivePortName() + " disconnected.");
                     break;
                 default:
                     logger.info("Unexpected event type: " + event.getEventType());
                     Menu.log("Unexpected event type: " + event.getEventType());
             }
+        } catch (Exception e) {
+            logger.info(e.getClass() + e.getMessage());
         } finally {
             future.cancel(true);
         }
@@ -335,10 +326,12 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
     }
 
     public void refresh() {
-        for (String key : newPlots.keySet()) {
-            plots.put(key, newPlots.get(key));
+        synchronized (newPlots) {
+            for (String key : newPlots.keySet()) {
+                plots.put(key, newPlots.get(key));
+            }
+            newPlots.clear();
         }
-        newPlots.clear();
     }
 
     public boolean close() {

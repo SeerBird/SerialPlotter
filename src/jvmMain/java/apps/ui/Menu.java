@@ -39,6 +39,7 @@ public class Menu {
     private static final ArrayList<String> commandLog = new ArrayList<>();
     private static int commandID = 0;
     private static boolean waiting = false;
+    private static boolean toUpdate = true;
     private static final Thread onShutdown = new Thread(() -> {
         for (PortPlotGroup port : plotContainer.getPortPlotGroups()) {
             port.close();
@@ -57,47 +58,55 @@ public class Menu {
     }
 
     //region Update Contents
-    public static synchronized void update() {
+    public static void queueUpdate() {
+        toUpdate = true;
+    }
+
+    public static void update() {
+        if (!toUpdate) {
+            return;
+        }
+        toUpdate = false;
         ScheduledFuture<?> future = Handler.getScheduler().schedule(() -> logger.info("We're fucked!"), 1500, TimeUnit.MILLISECONDS);
-        try{
-        //region resize and arrange everything
-        int width = Handler.getWindow().getWidth();
-        int height = Handler.getWindow().getHeight();
-        if (width > 600) {
-            portList.width = width / 3;
-            commandLine.width = width / 3;
-            log.width = width / 3;
-            plotContainer.width = width - width / 3;
-            plotContainer.x = width / 3;
-        } else {
-            portList.width = 0;
-            commandLine.width = 0;
-            log.width = 0;
-            plotContainer.width = width;
-            plotContainer.x = 0;
-        }
-        portList.y = 0;
-        portList.x = 0;
-        plotContainer.y = 0;
-        portList.updateButtons(); // determines portList's height
-        if (portList.height > height) {
-            commandLine.text = "Stop contorting the window!";
-        }
-        log.y = portList.height;
-        log.height = Math.max(0, height - commandLine.height - portList.height);
-        commandLine.y = height - commandLine.height;
-        plotContainer.height = height;
-        //endregion
-        plotContainer.update();}
-        catch(Exception e){
+        try {
+            //region resize and arrange everything
+            int width = Handler.getWindow().getWidth();
+            int height = Handler.getWindow().getHeight();
+            if (width > 600) {
+                portList.width = width / 3;
+                commandLine.width = width / 3;
+                log.width = width / 3;
+                plotContainer.width = width - width / 3;
+                plotContainer.x = width / 3;
+            } else {
+                portList.width = 0;
+                commandLine.width = 0;
+                log.width = 0;
+                plotContainer.width = width;
+                plotContainer.x = 0;
+            }
+            portList.y = 0;
+            portList.x = 0;
+            plotContainer.y = 0;
+            portList.updateButtons(); // determines portList's height
+            if (portList.height > height) {
+                commandLine.text = "Stop contorting the window!";
+            }
+            log.y = portList.height;
+            log.height = Math.max(0, height - commandLine.height - portList.height);
+            commandLine.y = height - commandLine.height;
+            plotContainer.height = height;
+            //endregion
+            plotContainer.update();
+        } catch (Exception e) {
             logger.info(e.getMessage());
-        }finally{
+        } finally {
             future.cancel(true);
         }
     }
 
     private static void sendCommand(String command) {
-        if(command.isEmpty()){
+        if (command.isEmpty()) {
             return;
         }
         //region add command to commandLog
@@ -138,7 +147,6 @@ public class Menu {
 
     public static void log(String string) { //called concurrently?
         log.log(string);
-
     }
 
     public static void setCommandConsumer(PortPlotGroup port) {
@@ -180,7 +188,7 @@ public class Menu {
 
     public static boolean release() {
         if (pressed != null) {
-            if(waiting){
+            if (waiting) {
                 Menu.log("Still waiting!");
                 return false;
             }
@@ -262,7 +270,8 @@ public class Menu {
         waiting = true;
         Handler.getScheduler().schedule(() -> waiting = false, maxMillis, TimeUnit.MILLISECONDS);
     }
-    public static void unpause(){
+
+    public static void unpause() {
         waiting = false;
     }
 

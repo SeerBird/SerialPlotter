@@ -64,8 +64,8 @@ public class AppWindow extends JFrame {
             public void componentResized(ComponentEvent e) {
                 width = e.getComponent().getWidth();
                 height = e.getComponent().getHeight(); //does this give the right size?
+                Menu.queueUpdate();
                 canvas.repaint();
-                Menu.update();
             }
         });
         setVisible(true);

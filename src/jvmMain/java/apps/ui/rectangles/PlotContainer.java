@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 
 public class PlotContainer extends RectElement {
     private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    final ArrayList<PortPlotGroup> portPlotGroups = new ArrayList<>();
+    final public ArrayList<PortPlotGroup> portPlotGroups = new ArrayList<>();
     PortPlotGroup pressed;
     ArrayList<Amogus> amogi;
 
@@ -62,13 +62,25 @@ public class PlotContainer extends RectElement {
                 logger.info(e.getMessage());
                 Menu.log(e.getMessage());
             }
-            Menu.update();
+            Menu.queueUpdate();
             Handler.repaint(x, y, width, height);
         });
         task.start();
     }
 
     public void removePortPlotGroup(PortPlotGroup plot) {
+        Thread closeTask = new Thread(() -> {
+            try {
+                Handler.timeout(plot::close, 1000);
+            } catch (ExecutionException e) {
+                logger.info("Exception closing " + plot.port.getDescriptivePortName());
+                Menu.log("Exception closing " + plot.port.getDescriptivePortName());
+            } catch (TimeoutException e) {
+                logger.info("Timed out closing " + plot.port.getDescriptivePortName());
+                Menu.log("Timed out closing " + plot.port.getDescriptivePortName());
+            }
+        });
+        closeTask.start();
         synchronized (portPlotGroups) {
             portPlotGroups.remove(plot);
             removeAmogi();
@@ -114,7 +126,7 @@ public class PlotContainer extends RectElement {
         baudrate.height = DevConfig.fontSize + DevConfig.vertMargin * 2;
         port.refresh();
         ArrayList<Plot> plots = new ArrayList<>(port.plots.values());
-        plots.sort(Comparator.comparing(o -> o.title.text)); // make sure the order is consistent
+        plots.sort(Comparator.comparing(o -> o.titleText)); // make sure the order is consistent
         //region get best plot layout
         int remainingHeight = height - title.height;
         int xn = 1;

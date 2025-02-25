@@ -59,7 +59,7 @@ public class Handler {
     static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
     static boolean bullshitOn = false;
     private final static Thread onShutdown = new Thread(() -> {
-
+// close ports?
     });
 
     public static void run() {
@@ -69,7 +69,7 @@ public class Handler {
         Audio.start();
         Menu.start();
         Renderer.start();
-        Menu.update();
+        Handler.repaint();
         //endregion
     }
 

@@ -11,25 +11,27 @@ import java.util.HashMap;
 public class Plot extends RectElement {
     RectElement pressed;
     public Textbox range;
+    public String titleText;
     public Label title;
-    HashMap<String, ArrayList<Float>> dataSets;
-    HashMap<String, ArrayList<Float>> newDataSets;
+    final HashMap<String, ArrayList<Float>> dataSets = new HashMap<>();
+    ;
+    final HashMap<String, ArrayList<Float>> newDataSets = new HashMap<>();
+    ;
     int rangeN = DevConfig.defaultRange;
 
     public Plot(int x, int y, int width, int height, String title) {
         super(x, y, width, height);
+        this.titleText = title;
         range = new Textbox(x, y, width, height, String.valueOf(DevConfig.defaultRange), (String string) -> {
             try {
                 rangeN = Integer.parseInt(string);
-                if(rangeN>DevConfig.maxPlotEntries){
+                if (rangeN > DevConfig.maxPlotEntries) {
                     rangeN = DevConfig.maxPlotEntries;
                 }
             } catch (NumberFormatException e) {
                 Audio.playSound(Sound.stopPls);
             }
         }, DevConfig.borders, true);
-        dataSets = new HashMap<>();
-        newDataSets = new HashMap<>();
         this.title = new Label(x, y, width / 2, height, "E0:" + title, DevConfig.borders);
     }
 
@@ -54,13 +56,18 @@ public class Plot extends RectElement {
 
     //endregion
     public void addValue(String key, float value) {
-        ArrayList<Float> dataSet = dataSets.get(key);
+        ArrayList<Float> dataSet;
+        synchronized (dataSets) {
+            dataSet = dataSets.get(key);
+        }
         //region create data set if absent
         if (dataSet == null) {
-            dataSet = newDataSets.get(key);
-            if (dataSet == null) {
-                dataSet = new ArrayList<>();
-                newDataSets.put(key, dataSet);
+            synchronized (newDataSets) {
+                dataSet = newDataSets.get(key);
+                if (dataSet == null) {
+                    dataSet = new ArrayList<>();
+                    newDataSets.put(key, dataSet);
+                }
             }
         }
         //endregion

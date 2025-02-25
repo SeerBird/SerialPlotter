@@ -26,16 +26,16 @@ public class PortList extends RectElement {
             }
             lastPorts = ports;
             updatePorts(ports);
-            Menu.update();
+            Menu.queueUpdate();
             Handler.repaint(x,y,width,height);
         }, 8, DevConfig.portListRefreshPeriod, TimeUnit.MILLISECONDS);
     }
 
     public void updatePorts(SerialPort[] ports) {
+        if (hovered) {
+            return; //don't move under the cursor.
+        }
         synchronized (portButtons) {
-            if (hovered) {
-                return; //don't move under the cursor.
-            }
             this.portButtons.clear();
             int topY = y;
             for (SerialPort port : ports) {

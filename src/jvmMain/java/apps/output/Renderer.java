@@ -68,6 +68,7 @@ public class Renderer {
 
     //region Menu
     private static void drawMenu() {
+        Menu.update();
         for (IElement e : Menu.getElements()) {
             if (e instanceof PortList) {
                 drawPortList((PortList) e);
@@ -177,9 +178,7 @@ public class Renderer {
         //endregion
         //endregion
         //region title and range
-        String title = plot.title.text;
-        title = "E" + order + ":" + title.substring(title.indexOf(":") + 1); // is this thread-safe? prolly not.
-        plot.title.text = title;
+        plot.title.text = "E" + order + ":" + plot.titleText; // is this thread-safe? prolly not.
         drawLabel(plot.title);
         drawRect(plot.title, DevConfig.borders);
         drawTextbox(plot.range);
@@ -189,9 +188,9 @@ public class Renderer {
             g.setColor(DevConfig.plotColors.get(i));
             ArrayList<Float> dataSet = dataSets.get(dataSetNames.get(i));
             for (int n = 0; n < dataSet.size() - 1; n++) {
-                g.drawLine(Math.round(plot.x + ((float) (n * pwidth)) / (float) (dataSet.size()-1)),
+                g.drawLine(Math.round(plot.x + ((float) (n * pwidth)) / (float) (dataSet.size() - 1)),
                         plotYFromValue(plot, min, max, dataSet.get(n)),
-                        Math.round(plot.x + ((float) ((n + 1) * pwidth)) / (float) (dataSet.size()-1)),
+                        Math.round(plot.x + ((float) ((n + 1) * pwidth)) / (float) (dataSet.size() - 1)),
                         plotYFromValue(plot, min, max, dataSet.get(n + 1)));
             }
         }
@@ -214,29 +213,33 @@ public class Renderer {
     private static void drawPortList(@NotNull PortList portList) {
         g.setColor(DevConfig.BACKGROUND);
         g.fillRect(portList.x, portList.y, (portList).width, portList.height);
-        for (Button port : new ArrayList<>(portList.portButtons)) {
-            drawButton(port);
+        synchronized (portList.portButtons) {
+            for (Button port : new ArrayList<>(portList.portButtons)) {
+                drawButton(port);
+            }
         }
     }
 
     private static void drawPlotContainer(@NotNull PlotContainer e) {
-        if (!e.getPortPlotGroups().isEmpty()) {
-            PortPlotGroup port = e.getPortPlotGroups().get(0);
-            drawTextbox(port.baudrate);
-            drawLabel(port.title);
-            Button button = port.closeButton;
-            if (button.isPressed()) {
-                g.setColor(button.textColor.darker());
-            } else {
-                g.setColor(button.textColor);
+        synchronized (e.portPlotGroups) {
+            if (!e.portPlotGroups.isEmpty()) {
+                PortPlotGroup port = e.portPlotGroups.get(0);
+                drawTextbox(port.baudrate);
+                drawLabel(port.title);
+                Button button = port.closeButton;
+                if (button.isPressed()) {
+                    g.setColor(button.textColor.darker());
+                } else {
+                    g.setColor(button.textColor);
+                }
+                g.drawRect(button.x, button.y, button.width, button.height);
+                g.drawLine(button.x, button.y, button.x + button.width, button.y + button.height);
+                g.drawLine(button.x + button.width, button.y, button.x, button.y + button.height);
+                for (Plot plot : port.getPlots().values()) {
+                    drawPlot(plot);
+                }
+                g.setColor(DevConfig.BACKGROUND);
             }
-            g.drawRect(button.x, button.y, button.width, button.height);
-            g.drawLine(button.x, button.y, button.x + button.width, button.y + button.height);
-            g.drawLine(button.x + button.width, button.y, button.x, button.y + button.height);
-            for (Plot plot : port.getPlots().values()) {
-                drawPlot(plot);
-            }
-            g.setColor(DevConfig.BACKGROUND);
         }
     }
 
