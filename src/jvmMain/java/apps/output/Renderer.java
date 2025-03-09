@@ -100,6 +100,9 @@ public class Renderer {
         boolean atLeastOneValue = false;
         for (ArrayList<Float> dataSet : new ArrayList<>(dataSets.values())) {
             for (Float value : new ArrayList<>(dataSet)) {
+                if(value==null){
+                    continue; //VERY BAD FIX. CHECK WHERE THE NULL COMES FROM!
+                }
                 atLeastOneValue = true;
                 if (value < min) {
                     min = value;

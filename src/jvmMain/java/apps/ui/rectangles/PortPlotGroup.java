@@ -50,6 +50,9 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
                     Menu.log("Couldn't change baudrate: is this a number?");
                     return;
                 } catch (ExecutionException e) {
+                    if(e.getCause() instanceof NumberFormatException){
+                        Audio.playSound(Sound.stopPls);
+                    }
                     logger.info("Couldn't change baudrate");
                     Menu.log("Couldn't change baudrate");
                     return;
