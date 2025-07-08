@@ -38,7 +38,7 @@ public class AppWindow extends JFrame {
     public AppWindow() {
         setResizable(true);
         setMinimumSize(new Dimension(400, 400));
-        setSize(DevConfig.DWIDTH, DevConfig.DHEIGHT);
+        setPreferredSize(new Dimension(WIDTH, HEIGHT));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         //region set font
         try {
@@ -65,25 +65,28 @@ public class AppWindow extends JFrame {
     private void initComponents() {
         setTitle("SerialPlotter");
         Container contentPane = getContentPane();
-        SpringLayout layout = new SpringLayout();
-        contentPane.setLayout(layout);
+        SpringLayout contentPaneLayout = new SpringLayout();
+        contentPane.setLayout(contentPaneLayout);
         JMenuBar menuBar = new JMenuBar();
         //region leftPanel
         JPanel leftPanel = new JPanel();
+        leftPanel.setPreferredSize(new Dimension(leftWidth,HEIGHT));
         contentPane.add(leftPanel);
-        leftPanel.setBounds(0,0,leftWidth,HEIGHT);
+        //leftPanel.setBounds(0,0,leftWidth,HEIGHT);
         {
+            SpringLayout leftPanelLayout = new SpringLayout();
+            leftPanel.setLayout(leftPanelLayout);
             //region commandLine
             JTextField commandLine = new JTextField();
             leftPanel.add(commandLine);
             {
-                commandLine.setMinimumSize(new Dimension(0, 0));
+                commandLine.setMinimumSize(null);
                 commandLine.setMaximumSize(null);
             }
-            commandLine.setBounds(0,HEIGHT-commandLineHeight,leftWidth,commandLineHeight);
-            layout.putConstraint(LEFT, commandLine, 0, LEFT, leftPanel);
-            layout.putConstraint(RIGHT, commandLine, 0, RIGHT, leftPanel);
-            layout.putConstraint(BOTTOM, commandLine, 0, BOTTOM, leftPanel);
+            //commandLine.setBounds(0,HEIGHT-commandLineHeight,leftWidth,commandLineHeight);
+            leftPanelLayout.putConstraint(LEFT, commandLine, 0, LEFT, leftPanel);
+            leftPanelLayout.putConstraint(RIGHT, commandLine, 0, RIGHT, leftPanel);
+            leftPanelLayout.putConstraint(BOTTOM, commandLine, 0, BOTTOM, leftPanel);
             //endregion
             //region logScroll
             log = new JTextPane();
@@ -92,24 +95,23 @@ public class AppWindow extends JFrame {
             {
                 logScroll.setMinimumSize(null);
                 logScroll.setMaximumSize(null);
-                //addColoredText(log,"bababoi\n",Color.BLUE);
+                addColoredText(log,"bababoi\n",Color.BLUE);
 
                 //logScroll.setMinimumSize(new Dimension(100,200));
             }
-            logScroll.setBounds(0,0,leftWidth,HEIGHT);
-            layout.putConstraint(LEFT, logScroll, 0, LEFT, leftPanel);
-            layout.putConstraint(BOTTOM, logScroll, 0, TOP, commandLine);
-            layout.putConstraint(TOP, logScroll, 0, TOP, leftPanel);
-            layout.putConstraint(RIGHT, logScroll, 0, RIGHT, leftPanel);
+            //logScroll.setBounds(0,0,leftWidth,HEIGHT);
+            leftPanelLayout.putConstraint(LEFT, logScroll, 0, LEFT, leftPanel);
+            leftPanelLayout.putConstraint(BOTTOM, logScroll, 0, TOP, commandLine);
+            leftPanelLayout.putConstraint(TOP, logScroll, 0, TOP, leftPanel);
+            leftPanelLayout.putConstraint(RIGHT, logScroll, 0, RIGHT, leftPanel);
             //endregion
+            new ComponentResizer(new Insets(0, 0, 0, 5), logScroll);
             new ComponentResizer(new Insets(0, 0, 0, 5), leftPanel);
         }
-        layout.putConstraint(LEFT, leftPanel, 0, LEFT, contentPane);
-        layout.putConstraint(BOTTOM, leftPanel, 0, BOTTOM, contentPane);
-        layout.putConstraint(TOP, leftPanel, 0, TOP, contentPane);
+        contentPaneLayout.putConstraint(LEFT, leftPanel, 0, LEFT, contentPane);
+        contentPaneLayout.putConstraint(BOTTOM, leftPanel, 0, BOTTOM, contentPane);
+        contentPaneLayout.putConstraint(TOP, leftPanel, 0, TOP, contentPane);
         //endregion
-        pack();
-
     }
     public void addColoredText(JTextPane pane, String text, Color color) {
         StyledDocument doc = pane.getStyledDocument();
