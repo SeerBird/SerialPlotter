@@ -46,6 +46,8 @@ kotlin {
                 implementation("org.apache.commons:commons-lang3:3.12.0")
                 implementation("com.fazecast:jSerialComm:2.11.0")
                 implementation("org.ejml:ejml-simple:0.39")
+                implementation("com.formdev:flatlaf:3.6")
+                implementation( "com.github.weisj:jsvg:2.0.0")
             }
         }
     }

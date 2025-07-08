@@ -48,3 +48,5 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+/src/jvmMain/java/apps/extrasFlatLaF
+/src/jvmMain/java/apps/extrasFlatLaF/

@@ -1,5 +1,7 @@
 package apps;
 
+import apps.extrasFlatLaF.FlatInspector;
+import apps.extrasFlatLaF.FlatUIDefaultsInspector;
 import apps.input.InputInfo;
 import apps.output.AppWindow;
 import apps.output.Renderer;
@@ -7,7 +9,10 @@ import apps.output.audio.Audio;
 import apps.ui.Menu;
 import apps.util.GFormatter;
 import com.fazecast.jSerialComm.*;
+import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.util.SystemInfo;
 
+import javax.swing.*;
 import java.util.concurrent.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
@@ -50,11 +55,11 @@ public class Handler {
             }
         }
         //endregion
+
     }
 
     private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private static ProgramState state;
-    static final AppWindow window = new AppWindow();
     static final InputInfo input = new InputInfo();
     static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
     static boolean bullshitOn = false;
@@ -67,18 +72,48 @@ public class Handler {
         state = ProgramState.main;
         //region Set starting state
         Audio.start();
-        Menu.start();
-        Renderer.start();
-        Handler.repaint();
+        //Menu.start();
+        //endregion
+        //region FlatLaf setup
+        if( SystemInfo.isMacOS ) {
+            // enable screen menu bar
+            // (moves menu bar from JFrame window to top of screen)
+            System.setProperty( "apple.laf.useScreenMenuBar", "true" );
+
+            // application name used in screen menu bar
+            // (in first menu after the "apple" menu)
+            System.setProperty( "apple.awt.application.name", "SerialPlotter" );
+
+            // appearance of window title bars
+            // possible values:
+            //   - "system": use current macOS appearance (light or dark)
+            //   - "NSAppearanceNameAqua": use light appearance
+            //   - "NSAppearanceNameDarkAqua": use dark appearance
+            // (must be set on main thread and before AWT/Swing is initialized;
+            //  setting it on AWT thread does not work)
+            System.setProperty( "apple.awt.application.appearance", "NSAppearanceNameDarkAqua" );
+        }
+        if( SystemInfo.isLinux ||SystemInfo.isWindows_10_orLater) {
+            // enable custom window decorations
+            JFrame.setDefaultLookAndFeelDecorated( true );
+            JDialog.setDefaultLookAndFeelDecorated( true );
+        }
+        FlatDarculaLaf.setup();
+        // smth ab screenshot mode, check FlatLaf/flatlaf-demo/src/main/java/com/formdev/flatlaf/demo
+        FlatInspector.install( "ctrl shift alt X" );
+        FlatUIDefaultsInspector.install( "ctrl shift alt Y" );
+        // /FlatLafDemo.java if needed
+        AppWindow frame = new AppWindow();
+        frame.pack();
+        frame.setLocationRelativeTo( null );
+        frame.setVisible( true );
         //endregion
     }
 
     public static void repaint(int x, int y, int width, int height) {
-        window.repaintCanvas(x, y, width, height);
     }
 
     public static void repaint() {
-        window.repaintCanvas();
     }
 
     public static SerialPort[] getPorts() {
@@ -86,7 +121,7 @@ public class Handler {
     }
 
     public static int stringLength(String string) {
-        return window.stringLength(string);
+        return 0;
     }
 
     public static void setSounds(boolean on) {
@@ -135,7 +170,7 @@ public class Handler {
     }
 
     public static AppWindow getWindow() {
-        return window;
+        return null;
     }
     //endregion
 }
