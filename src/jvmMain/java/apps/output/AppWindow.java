@@ -70,16 +70,17 @@ public class AppWindow extends JFrame {
         JMenuBar menuBar = new JMenuBar();
         //region leftPanel
         JPanel leftPanel = new JPanel();
+        contentPane.add(leftPanel);
         leftPanel.setBounds(0,0,leftWidth,HEIGHT);
         {
             //region commandLine
             JTextField commandLine = new JTextField();
+            leftPanel.add(commandLine);
             {
                 commandLine.setMinimumSize(new Dimension(0, 0));
                 commandLine.setMaximumSize(null);
             }
             commandLine.setBounds(0,HEIGHT-commandLineHeight,leftWidth,commandLineHeight);
-            leftPanel.add(commandLine);
             layout.putConstraint(LEFT, commandLine, 0, LEFT, leftPanel);
             layout.putConstraint(RIGHT, commandLine, 0, RIGHT, leftPanel);
             layout.putConstraint(BOTTOM, commandLine, 0, BOTTOM, leftPanel);
@@ -87,15 +88,15 @@ public class AppWindow extends JFrame {
             //region logScroll
             log = new JTextPane();
             JScrollPane logScroll = new JScrollPane(log);
+            leftPanel.add(logScroll);
             {
-                logScroll.setMinimumSize(new Dimension(0, 0));
+                logScroll.setMinimumSize(null);
                 logScroll.setMaximumSize(null);
                 //addColoredText(log,"bababoi\n",Color.BLUE);
 
                 //logScroll.setMinimumSize(new Dimension(100,200));
             }
             logScroll.setBounds(0,0,leftWidth,HEIGHT);
-            leftPanel.add(logScroll);
             layout.putConstraint(LEFT, logScroll, 0, LEFT, leftPanel);
             layout.putConstraint(BOTTOM, logScroll, 0, TOP, commandLine);
             layout.putConstraint(TOP, logScroll, 0, TOP, leftPanel);
@@ -103,11 +104,11 @@ public class AppWindow extends JFrame {
             //endregion
             new ComponentResizer(new Insets(0, 0, 0, 5), leftPanel);
         }
-        contentPane.add(leftPanel);
         layout.putConstraint(LEFT, leftPanel, 0, LEFT, contentPane);
         layout.putConstraint(BOTTOM, leftPanel, 0, BOTTOM, contentPane);
         layout.putConstraint(TOP, leftPanel, 0, TOP, contentPane);
         //endregion
+        pack();
 
     }
     public void addColoredText(JTextPane pane, String text, Color color) {
