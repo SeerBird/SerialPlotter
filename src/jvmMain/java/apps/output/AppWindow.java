@@ -105,7 +105,6 @@ public class AppWindow extends JFrame {
             leftPanelLayout.putConstraint(TOP, logScroll, 0, TOP, leftPanel);
             leftPanelLayout.putConstraint(RIGHT, logScroll, 0, RIGHT, leftPanel);
             //endregion
-            new ComponentResizer(new Insets(0, 0, 0, 5), logScroll);
             new ComponentResizer(new Insets(0, 0, 0, 5), leftPanel);
         }
         contentPaneLayout.putConstraint(LEFT, leftPanel, 0, LEFT, contentPane);
