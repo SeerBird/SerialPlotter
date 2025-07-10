@@ -26,7 +26,6 @@ public class PortPlotGroup extends RectElement implements SerialPortMessageListe
     public Textbox baudrate;
     HashMap<String, Plot> plots;
     final HashMap<String, Plot> newPlots = new HashMap<>();
-    ;
     IElement pressed;
     String leftover;
     long lastReceivedTime;

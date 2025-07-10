@@ -13,8 +13,6 @@
  */
 package apps.output;
 
-import com.formdev.flatlaf.util.SwingUtils;
-
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -57,14 +55,16 @@ public class ComponentResizer extends MouseAdapter {
     private Insets dragInsets;
     private Dimension snapSize;
     private int direction;
-    private Cursor sourceCursor;
+    private boolean cursorsChanged;
     private boolean resizing;
     private Rectangle bounds;
     private Point pressed;
     private boolean autoscrolls;
     private Dimension minimumSize = MINIMUM_SIZE;
     private Dimension maximumSize = MAXIMUM_SIZE;
-    private Component component;
+    private final Component component;
+    private final HashMap<Component, Cursor> flattenedTree;
+    private final ArrayList<Component> toValidate = new ArrayList<>();
 
 
     /**
@@ -75,8 +75,8 @@ public class ComponentResizer extends MouseAdapter {
      * @param dragInsets Insets specifying which borders are eligible to be resized.
      * @param components components to be automatically registered
      */
-    public ComponentResizer(Insets dragInsets, Component components) {
-        this(dragInsets, new Dimension(1, 1), components);
+    public ComponentResizer(Insets dragInsets, Component components, Component... toValidate) {
+        this(dragInsets, new Dimension(1, 1), components, toValidate);
     }
 
     /**
@@ -85,22 +85,23 @@ public class ComponentResizer extends MouseAdapter {
      * @param dragInsets Insets specifying which borders are eligible to be resized.
      * @param snapSize   Specify the dimension to which the border will snap to when being dragged.
      *                   Snapping occurs at the halfway mark.
-     * @param com components to be automatically registered
+     * @param com        components to be automatically registered
      */
-    public ComponentResizer(Insets dragInsets, Dimension snapSize, Component com) {
+    public ComponentResizer(Insets dragInsets, Dimension snapSize, Component com, Component... toValidate) {
+        this.toValidate.addAll(List.of(toValidate));
         setDragInsets(dragInsets);
         setSnapSize(snapSize);
         //region register the component and all its children
         component = com;
         //region breadth-first traversal of the tree
-        ArrayList<Component> toRegister = new ArrayList<>();
+        flattenedTree = new HashMap<>();
         ArrayList<Component> traversing = new ArrayList<>();
         ArrayList<Component> nextTraversing = new ArrayList<>();
         traversing.add(component);
-        while(!traversing.isEmpty()){
-            for(Component c: traversing){
-                toRegister.add(c);
-                if(c instanceof Container){
+        while (!traversing.isEmpty()) {
+            for (Component c : traversing) {
+                flattenedTree.put(c, c.getCursor());
+                if (c instanceof Container) {
                     nextTraversing.addAll(List.of(((Container) c).getComponents()));
                 }
             }
@@ -109,7 +110,7 @@ public class ComponentResizer extends MouseAdapter {
             nextTraversing.clear();
         }
         //endregion
-        for(Component c:toRegister){
+        for (Component c : flattenedTree.keySet()) {
             c.addMouseListener(this);
             c.addMouseMotionListener(this);
         }
@@ -180,12 +181,10 @@ public class ComponentResizer extends MouseAdapter {
     }
 
     /**
-     * Remove listeners from the specified component.
-     *
-     * @param components the component the listeners are removed from
+     * Remove listeners from all registered components
      */
-    public void deregisterComponent(Component... components) {
-        for (Component component : components) {
+    public void deregister() {
+        for (Component component : flattenedTree.keySet()) {
             component.removeMouseListener(this);
             component.removeMouseMotionListener(this);
         }
@@ -231,7 +230,7 @@ public class ComponentResizer extends MouseAdapter {
     @Override
     public void mouseMoved(MouseEvent e) {
         Component source = e.getComponent();
-        Point location = SwingUtilities.convertPoint(source,e.getPoint(),component);
+        Point location = SwingUtilities.convertPoint(source, e.getPoint(), component);
 
         direction = 0;
 
@@ -253,8 +252,8 @@ public class ComponentResizer extends MouseAdapter {
 
         // Mouse is no longer over a resizable border
 
-        if (direction == 0) {
-            source.setCursor(sourceCursor); //TODO: not sure here
+        if (direction == 0 && !resizing) {
+            source.setCursor(flattenedTree.get(source));
         } else {
             // use the appropriate resizable cursor
             int cursorType = cursors.get(direction);
@@ -263,11 +262,16 @@ public class ComponentResizer extends MouseAdapter {
         }
     }
 
+
     @Override
     public void mouseEntered(MouseEvent e) {
+        Component source = e.getComponent();
         if (!resizing) {
-            Component source = e.getComponent();
-            sourceCursor = source.getCursor();
+            flattenedTree.put(e.getComponent(), e.getComponent().getCursor());
+        }else{
+            int cursorType = cursors.get(direction);
+            Cursor cursor = Cursor.getPredefinedCursor(cursorType);
+            source.setCursor(cursor);
         }
     }
 
@@ -275,7 +279,7 @@ public class ComponentResizer extends MouseAdapter {
     public void mouseExited(MouseEvent e) {
         if (!resizing) {
             Component source = e.getComponent();
-            source.setCursor(sourceCursor);
+            source.setCursor(flattenedTree.get(source));
         }
     }
 
@@ -314,10 +318,7 @@ public class ComponentResizer extends MouseAdapter {
     @Override
     public void mouseReleased(MouseEvent e) {
         resizing = false;
-
-        Component source = e.getComponent();
-        source.setCursor(sourceCursor);
-
+        resetCursors();
         if (component instanceof JComponent) {
             ((JComponent) component).setAutoscrolls(autoscrolls);
         }
@@ -391,7 +392,21 @@ public class ComponentResizer extends MouseAdapter {
         }
         source.setBounds(x, y, width, height);
         source.setPreferredSize(new Dimension(width, height));
-        source.validate();
+        source.getParent().validate(); //TODO: this is a dirty hack that will never come back to bite me
+    }
+
+    private void resetCursors() {
+        for (Component c : flattenedTree.keySet()) {
+            c.setCursor(flattenedTree.get(c));
+        }
+    }
+
+    private void setCursors(Cursor cursor) {
+        if (!cursorsChanged) {
+            for (Component c : flattenedTree.keySet()) {
+                c.setCursor(cursor);
+            }
+        }
     }
 
     /*

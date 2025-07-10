@@ -61,7 +61,7 @@ public class PortTester {
         //endregion
         state.set(0, 200);
         SerialPort[] ports = SerialPort.getCommPorts();
-        SerialPort port = ports[1];
+        SerialPort port = ports[2];
         port.setBaudRate(115200);
         port.openPort();
         port.addDataListener(new SerialPortDataListener() {
@@ -109,7 +109,7 @@ public class PortTester {
             //byte[] buf = ("sin1:"+ sin1+";").getBytes(StandardCharsets.UTF_8);
             int length = port.writeBytes(buf, buf.length);
             logger.info("Tester sending shit: "+length+" bytes");
-        }, 8, 10, TimeUnit.NANOSECONDS);
+        }, 8, 10, TimeUnit.MILLISECONDS);
         /*
         scheduler.scheduleAtFixedRate(() -> {
             byte[] buf = ("A 8 0 1 3 BABABOI live and prosper").getBytes(StandardCharsets.UTF_8);

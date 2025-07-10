@@ -77,7 +77,7 @@ public class Renderer {
             } else if (e instanceof Textbox) {
                 drawTextbox((Textbox) e);
             } else if (e instanceof PlotContainer) {
-                drawPlotContainer((PlotContainer) e);
+                //drawPlotContainer((PlotContainer) e);
             } else {
                 logger.info("Encountered an IElement I did not anticipate. How?");
             }
@@ -85,6 +85,7 @@ public class Renderer {
     }
 
     //region draw elements
+    /*
     private static void drawPlot(@NotNull Plot plot) {
         drawRect(plot, DevConfig.borders);
         if (plot.height - plot.title.height < 5 || plot.width < 5) {
@@ -212,7 +213,7 @@ public class Renderer {
         }
         //endregion
     }
-
+*/
     private static void drawPortList(@NotNull PortList portList) {
         g.setColor(DevConfig.BACKGROUND);
         g.fillRect(portList.x, portList.y, (portList).width, portList.height);
@@ -223,6 +224,7 @@ public class Renderer {
         }
     }
 
+    /*
     private static void drawPlotContainer(@NotNull PlotContainer e) {
         synchronized (e.portPlotGroups) {
             if (!e.portPlotGroups.isEmpty()) {
@@ -245,7 +247,7 @@ public class Renderer {
             }
         }
     }
-
+*/
     private static void drawRect(@NotNull RectElement e, Color color) {
         g.setColor(color);
         g.drawRect(e.x, e.y, e.width, e.height);
@@ -428,11 +430,6 @@ public class Renderer {
     //endregion
     private static float nDecPlaces(float number, int n) {
         return (float) (Math.round(number * Math.pow(10, n - 1)) / Math.pow(10, n - 1));
-    }
-
-    @Contract(pure = true)
-    private static int plotYFromValue(@NotNull Plot plot, float min, float max, float value) {
-        return Math.round(plot.y + plot.height - DevConfig.vertMargin - (plot.height - plot.title.height - 2 * DevConfig.vertMargin) * (value - min) / (max - min));
     }
     //endregion
 
