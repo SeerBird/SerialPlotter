@@ -39,6 +39,8 @@ public class SmartScroller implements AdjustmentListener {
 
     private int previousValue = -1;
     private int previousMaximum = -1;
+    private int previousExtent = -1;
+    private boolean previousExtentChanged = false;
 
     /**
      * Convenience constructor.
@@ -102,7 +104,7 @@ public class SmartScroller implements AdjustmentListener {
 
     @Override
     public void adjustmentValueChanged(final AdjustmentEvent e) {
-        SwingUtilities.invokeLater(() -> checkScrollBar(e));
+        checkScrollBar(e); //Doesn't this only get called on the event dispatching thread? this had an invokeLater before
     }
 
     /*
@@ -121,6 +123,7 @@ public class SmartScroller implements AdjustmentListener {
 
         boolean valueChanged = previousValue != value;
         boolean maximumChanged = previousMaximum != maximum;
+        boolean extentChanged = previousExtent!=extent;
 
         //  Check if the user has manually repositioned the scrollbar
 
@@ -130,6 +133,11 @@ public class SmartScroller implements AdjustmentListener {
             else
                 adjustScrollBar = value + extent >= maximum;
         }
+        if(previousExtentChanged){
+            adjustScrollBar = true;
+        }
+        previousExtentChanged = extentChanged;
+
 
         //  Reset the "value" so we can reposition the viewport and
         //  distinguish between a user scroll and a program scroll.
@@ -153,5 +161,6 @@ public class SmartScroller implements AdjustmentListener {
 
         previousValue = value;
         previousMaximum = maximum;
+        previousExtent = extent;
     }
 }

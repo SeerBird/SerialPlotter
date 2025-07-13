@@ -1,5 +1,6 @@
 package apps.output;
 
+import apps.Resources;
 import apps.util.DevConfig;
 import org.jetbrains.annotations.NotNull;
 
@@ -7,22 +8,29 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class Plot extends Canvas {
     private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     final HashMap<String, ArrayList<Float>> dataSets = new HashMap<>();
     final HashMap<String, ArrayList<Float>> newDataSets = new HashMap<>();
+    final HashMap<String, JToggleButton> dataSetToggles = new HashMap<>();
     int rangeN = DevConfig.defaultRange;
     JLabel titleLabel;
     String plotName;
     JPanel legend;
-    public Plot(JLabel titleLabel, String plotName,JPanel legend){
+    JScrollPane legendScroll;
+
+    public Plot(JLabel titleLabel, String plotName, JPanel legend, JScrollPane legendScroll) {
         this.titleLabel = titleLabel;
         this.plotName = plotName;
         this.legend = legend;
+        this.legendScroll = legendScroll;
     }
+
     public void addValue(String key, float value) {
         ArrayList<Float> dataSet;
         synchronized (dataSets) {
@@ -30,12 +38,37 @@ public class Plot extends Canvas {
         }
         //region create data set if absent
         if (dataSet == null) {
-            synchronized (newDataSets) {
-                dataSet = newDataSets.get(key);
-                if (dataSet == null) {
-                    dataSet = new ArrayList<>();
-                    newDataSets.put(key, dataSet);
-                }
+            //TODO: there was a synch(newDataSets) here
+            dataSet = newDataSets.get(key);
+            if (dataSet == null) {
+                dataSet = new ArrayList<>();
+                newDataSets.put(key, dataSet);
+                JToggleButton dataSetToggle = new JToggleButton(key, true);
+                dataSetToggles.put(key, dataSetToggle);
+                SwingUtilities.invokeLater(() -> {
+                    legend.add(dataSetToggle);
+                    //region update legend and plot colors
+                    double maxwidth = 0;
+                    double totheight = 0;
+                    ArrayList<JToggleButton> toggleButtons = new ArrayList<>(dataSetToggles.values());
+                    legend.removeAll();
+                    toggleButtons.sort(Comparator.comparing(JToggleButton::getText));
+                    for (int i = 0; i < toggleButtons.size(); i++) {
+                        JToggleButton but = toggleButtons.get(i);
+                        but.setIcon(Resources.disabledIcons.get(i % Resources.disabledIcons.size()));
+                        but.setSelectedIcon(Resources.enabledIcons.get(i % Resources.enabledIcons.size()));
+                        legend.add(but);
+                        totheight += but.getPreferredSize().getHeight();
+                        if (but.getPreferredSize().getWidth() + 16 > maxwidth) {
+                            maxwidth = but.getPreferredSize().getWidth() + 16;
+                        }//TODO: leave these hard-coded numbers be and enjoy life
+                    }
+                    totheight = Math.min(26 * 2 + 6, totheight + 6);
+                    legendScroll.setPreferredSize(new Dimension((int) maxwidth, (int) totheight));
+                    //legend.setPreferredSize(new Dimension((int) maxwidth,legend.getHeight()));
+                    legendScroll.getParent().revalidate();
+                    //endregion});
+                });
             }
         }
         //endregion
@@ -44,19 +77,32 @@ public class Plot extends Canvas {
             dataSet.remove(0);
         }
     }
+
+    @Override
+    public void update(Graphics g) {
+        paint(g);
+    }
+
     @Override
     public void paint(@NotNull Graphics g) {
+        if (getBufferStrategy() == null) {
+            createBufferStrategy(2);
+        }
+        g = getBufferStrategy().getDrawGraphics();
+        g.clearRect(0, 0, getWidth(), getHeight());
+        dataSets.putAll(newDataSets);
+        newDataSets.clear();
         int width = getWidth();
         int height = getHeight();
         int pwidth = width;
-        int pheight = height;
+        int pheight = height - 2 * DevConfig.vertMargin;
         //region find minimum and maximum value
         float max = -Float.MAX_VALUE;
         float min = Float.MAX_VALUE;
         boolean atLeastOneValue = false;
         for (ArrayList<Float> dataSet : new ArrayList<>(dataSets.values())) {
             for (Float value : new ArrayList<>(dataSet)) {
-                if(value==null){
+                if (value == null) {
                     continue; //VERY BAD FIX. CHECK WHERE THE NULL COMES FROM!
                 }
                 atLeastOneValue = true;
@@ -126,24 +172,27 @@ public class Plot extends Canvas {
                 break;
             }
             int y = plotYFromValue(min, max, value);
-            g.drawLine(getX(), y + DevConfig.vertMargin,
-                    getX() + getWidth(), y + DevConfig.vertMargin);
-            g.drawString(String.valueOf(nDecPlaces((value / unit), 3)), getX(), y + DevConfig.vertMargin);
+            g.drawLine(getX(), y,
+                    getX() + getWidth(), y);
+            g.drawString(String.valueOf(nDecPlaces((value / unit), 3)), getX(), y);
             lineID = goingUp ? lineID + 1 : lineID - 1;
         }
         //endregion
         //endregion
         //region title and range
-        if(order==0){
+        if (order == 0) {
             titleLabel.setText(plotName);
-        }else{
+        } else {
             titleLabel.setText("E" + order + ":" + plotName);
         }
 
         //endregion
         //region draw plot line segments between data points
-        for (int i = 0; i < DevConfig.plotColors.size() && i < dataSetNames.size(); i++) { // no colors left? no plot for you.
-            g.setColor(DevConfig.plotColors.get(i));
+        for (int i = 0; i < dataSetNames.size(); i++) { // no colors left? no plot for you.
+            if (!dataSetToggles.get(dataSetNames.get(i)).isSelected()) {
+                continue;
+            }
+            g.setColor(DevConfig.plotColors.get(i % DevConfig.plotColors.size()));
             ArrayList<Float> dataSet = dataSets.get(dataSetNames.get(i));
             for (int n = 0; n < dataSet.size() - 1; n++) {
                 g.drawLine(Math.round(getX() + ((float) (n * pwidth)) / (float) (dataSet.size() - 1)),
@@ -168,11 +217,16 @@ public class Plot extends Canvas {
         }
          */
         //endregion
+        g.dispose();
+        getBufferStrategy().show();
     }
+
     private static float nDecPlaces(float number, int n) {
         return (float) (Math.round(number * Math.pow(10, n - 1)) / Math.pow(10, n - 1));
     }
+
     private int plotYFromValue(float min, float max, float value) {
-        return Math.round(getY() + getHeight() - DevConfig.vertMargin - (getHeight() - 2 * DevConfig.vertMargin) * (value - min) / (max - min));
+        int y = Math.round(getHeight() - DevConfig.vertMargin - (getHeight() - 2 * DevConfig.vertMargin) * (value - min) / (max - min));
+        return y;
     }
 }

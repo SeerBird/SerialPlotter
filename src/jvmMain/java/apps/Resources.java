@@ -1,5 +1,7 @@
 package apps;
 
+import apps.util.FlatSVGIcon;
+
 import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
@@ -16,6 +18,8 @@ public class Resources {
     public static URL stoppls;
     public static File comfortaa;
     public static ArrayList<File> amogus;
+    public static ArrayList<FlatSVGIcon> enabledIcons;
+    public static ArrayList<FlatSVGIcon> disabledIcons;
 
     static {
         goodnight = Resources.class.getResource("goodnight.wav");
@@ -24,6 +28,12 @@ public class Resources {
         pipe = Resources.class.getResource("pipe.wav");
         textBoxFail = Resources.class.getResource("textBoxFail.wav");
         stoppls = Resources.class.getResource("stoppls.wav");
+        enabledIcons = new ArrayList<>();
+        disabledIcons = new ArrayList<>();
+        for(int i=1;i<5;i++){
+            enabledIcons.add(new FlatSVGIcon(Resources.class.getResource("icons/enabled"+ i + ".svg")).derive(0.25F));
+            disabledIcons.add(new FlatSVGIcon(Resources.class.getResource("icons/disabled"+ i+ ".svg")).derive(0.25F));
+        }
         amogus = new ArrayList<>();
         try {
             comfortaa = getFile("Comfortaa.ttf");
@@ -35,7 +45,7 @@ public class Resources {
             logger.info((Objects.requireNonNull(Resources.class.getResource("Comfortaa.ttf"))).toExternalForm());
             throw new RuntimeException(e);
         }
-        assert (comfortaa != null);
+        assert (comfortaa != null); //TODO: assert everything is loaded well
     }
 
     private static File getFile(String path) {

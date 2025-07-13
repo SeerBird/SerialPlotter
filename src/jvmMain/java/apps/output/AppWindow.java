@@ -15,18 +15,18 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.ui.FlatTitlePane;
 import org.jetbrains.annotations.NotNull;
+import org.w3c.dom.stylesheets.DocumentStyle;
 
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import javax.swing.text.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.event.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -45,10 +45,15 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
     public static final int WIDTH = 1140;
     public static final int HEIGHT = 600;
     public static final int leftWidth = 300;
-    public static final int commandLineHeight = 30;
-    private static final int DEFAULT_BAUDRATE = 9600;
     //endregion
     //region variables
+    JTextField commandLine;
+    private static final ArrayList<String> commandLog = new ArrayList<>();
+    private static int commandID = 0;
+    ArrayList<DefaultStyledDocument.ElementSpec> newLogEntries = new ArrayList<>();
+    int newLogEntriesLength = 0;
+    long lastLog = -1;
+    int baudrateDefault = 9600;
     JTextPane log;
     JScrollPane logScroll;
     JLabel portTitle;
@@ -57,7 +62,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
     JCheckBoxMenuItem logPackets;
     SerialPort connected;
     JPanel plotGroup;
-    String leftover;
+    String leftover = "";
     long lastReceivedTime;
     final HashMap<Integer, Boolean> timeoutFlags = new HashMap<>();
     HashMap<String, Plot> plots = new HashMap<>();
@@ -134,8 +139,6 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
         //endregion
         //region logPackets
         logPackets = new JCheckBoxMenuItem("Log packets");
-
-
         menuBar.add(logPackets);
         //endregion logPackets
         setJMenuBar(menuBar);
@@ -149,7 +152,29 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
             SpringLayout leftPanelLayout = new SpringLayout();
             leftPanel.setLayout(leftPanelLayout);
             //region commandLine
-            JTextField commandLine = new JTextField();
+            commandLine = new JTextField();
+            commandLine.addActionListener(e -> sendCommand(commandLine.getText()));
+            commandLine.addKeyListener(new KeyListener() {
+                @Override
+                public void keyTyped(KeyEvent e) {
+
+                }
+
+                @Override
+                public void keyPressed(KeyEvent e) {
+
+                }
+
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_UP) {
+                        commandShift(-1);
+                    } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+                        commandShift(1);
+                    }
+                }
+            });
+
             leftPanel.add(commandLine);
             {
                 commandLine.setMinimumSize(null);
@@ -174,6 +199,8 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                 }
             };
             log.setEditable(false);
+            Style style = log.addStyle("Info", null);
+            StyleConstants.setForeground(style, Color.white);
             logScroll = new JScrollPane(log);
             new SmartScroller(logScroll);
             leftPanel.add(logScroll);
@@ -193,11 +220,47 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
         //endregion
         //region rightPanel
         rightPanel = new JPanel();
+
         {
             SpringLayout rightPanelLayout = new SpringLayout();
             rightPanel.setLayout(rightPanelLayout);
             //region baudrate
             baudrate = new JTextField();
+            baudrate.addActionListener(event -> {
+                String rate = baudrate.getText();
+                Thread task = new Thread(() -> {
+                    boolean res;
+                    try {
+                        res = Handler.timeout(() -> connected.setBaudRate(Integer.parseInt(rate)), 1000);
+                    } catch (NumberFormatException e) {
+                        Audio.playSound(Sound.stopPls);
+                        logger.info("Couldn't change baudrate: is this a number?");
+                        log("Couldn't change baudrate: is this a number?");
+                        return;
+                    } catch (ExecutionException e) {
+                        if (e.getCause() instanceof NumberFormatException) {
+                            Audio.playSound(Sound.stopPls);
+                        }
+                        logger.info("Couldn't change baudrate");
+                        log("Couldn't change baudrate");
+                        return;
+                    } catch (TimeoutException e) {
+                        logger.info("Timed out changing baudrate");
+                        log("Timed out changing baudrate");
+                        return;
+                    }
+                    if (res) {
+                        logger.info("Changed baudrate to " + rate);
+                        log("Changed baudrate to " + rate);
+                        baudrateDefault = Integer.parseInt(rate);
+                    } else {
+                        logger.info("Baudrate " + rate + " not allowed on this system");
+                        log("Baudrate " + rate + " not allowed on this system");
+                    }
+                });
+                task.start();
+                baudrate.transferFocusBackward();
+            });
             rightPanelLayout.putConstraint(RIGHT, baudrate, 0, RIGHT, rightPanel);
             rightPanelLayout.putConstraint(TOP, baudrate, 0, TOP, rightPanel);
             rightPanel.add(baudrate);
@@ -219,6 +282,13 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
             //endregion
             //region plotGroup
             plotGroup = new JPanel();
+            plotGroup.addComponentListener(new ComponentAdapter() {
+                @Override
+                public void componentResized(ComponentEvent e) {
+                    super.componentResized(e);
+                    rearrangePlotGroup();
+                }
+            });
             rightPanelLayout.putConstraint(TOP, plotGroup, 0, BOTTOM, baudrate);
             rightPanelLayout.putConstraint(BOTTOM, plotGroup, 0, BOTTOM, rightPanel);
             rightPanelLayout.putConstraint(RIGHT, plotGroup, 0, RIGHT, rightPanel);
@@ -227,6 +297,8 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
             //endregion
             rightPanel.setVisible(false);
         }
+        rightPanel.setOpaque(false);
+        plotGroup.setOpaque(false);
         contentPane.add(rightPanel);
         contentPaneLayout.putConstraint(RIGHT, rightPanel, 0, RIGHT, contentPane);
         contentPaneLayout.putConstraint(TOP, rightPanel, 0, TOP, contentPane);
@@ -237,15 +309,66 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
     }
 
     public void log(String message) { //TODO: colours in log here would be good
-        StyledDocument doc = log.getStyledDocument();
-
-        Style style = log.addStyle("Color Style", null);
-        StyleConstants.setForeground(style, Color.white);
-        try {
-            doc.insertString(doc.getLength(), message + "\n", style);
-        } catch (BadLocationException e) {
-            logger.info(e.getMessage());
+        message += "\n";
+        Style style = log.getStyle("Info");
+        DefaultStyledDocument.ElementSpec entry = new DefaultStyledDocument.ElementSpec(style,
+                DefaultStyledDocument.ElementSpec.ContentType, message.toCharArray(),
+                newLogEntriesLength, message.length());
+        newLogEntries.add(entry);
+        newLogEntriesLength += message.length();
+        if (System.nanoTime() - lastLog > DevConfig.messageReceivePeriod * 1e6) {
+            StyledDocument doc = log.getStyledDocument();
+            for (DefaultStyledDocument.ElementSpec el : newLogEntries) {
+                try {
+                    doc.insertString(doc.getLength(), new String(el.getArray()), el.getAttributes());
+                } catch (BadLocationException e) {
+                    logger.info(e.getMessage());
+                }
+            }
+            newLogEntries.clear();
+            newLogEntriesLength = 0;
+            lastLog = System.nanoTime();
         }
+    }
+
+    private void sendCommand(@NotNull String command) {
+        if (command.isEmpty()) {
+            return;
+        }
+        //region add command to commandLog
+        commandLog.add(command);
+        if (commandLog.size() > DevConfig.maxCommandLogSize) {
+            commandLog.remove(0);
+        }
+        commandID = commandLog.size();
+        //endregion
+        if (connected == null) {
+            log("No port connected! I think...");
+            return;
+        }
+        if (!connected.isOpen()) {
+            log("Port closed.");
+            return;
+        }
+        byte[] bytes = command.getBytes(StandardCharsets.UTF_8);
+        Thread task = new Thread(() -> {
+            int result = connected.writeBytes(bytes, bytes.length);
+            log("Sent \"" + command + "\" as " + result + " byte" + (result == 1 ? "" : "s"));
+        });
+        task.start();
+        commandLine.setText("");
+        Audio.playSound(Sound.pewPew);
+        //commandLine.enter(); // I think this is redundant? each textBox has a leaveOnSubmit property now...
+    }
+
+    private void commandShift(int n) {
+        commandID = Math.max(Math.min(commandID + n, commandLog.size()), 0);
+        if (commandID == commandLog.size()) {
+            commandLine.setText("");
+        } else {
+            commandLine.setText(commandLog.get(commandID));
+        }
+        commandLine.setCaretPosition(commandLine.getText().length());
     }
 
     private void connectToPort(SerialPort port) {
@@ -277,14 +400,13 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
         if (!opening) {
             logger.info("Failed to open port " + port.getDescriptivePortName());
             log("Failed to open port " + port.getDescriptivePortName());
+            return;
         } else {
             logger.info("Opened " + port.getDescriptivePortName());
             log("Opened " + port.getDescriptivePortName());
         }
         try {
             listening = Handler.timeout(() -> {
-                port.flushDataListener();
-                port.flushIOBuffers(); //TODO: this line and the above one, can they be removed?
                 port.removeDataListener();
                 return port.addDataListener(this);
             }, 1000);
@@ -298,17 +420,16 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
         if (!listening) {
             logger.info("Failed to attach listener to port " + port.getDescriptivePortName());
             log("Failed to attach listener to port " + port.getDescriptivePortName());
+            return;
         } else {
             logger.info("Listening to  " + port.getDescriptivePortName());
             log("Listening to  " + port.getDescriptivePortName());
         }
         //endregion
-        if (!(listening && opening)) {
-            return;
-        }
         //region set up right panel
         connected = port;
         SwingUtilities.invokeLater(() -> {
+            baudrate.setText(String.valueOf(baudrateDefault));
             portTitle.setText(port.getDescriptivePortName());
             rightPanel.setVisible(true);
         });
@@ -316,6 +437,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
     }
 
     private boolean closePort(SerialPort port) {
+        plots.clear();
         if (port == null) {
             log("No port connected!");
             return false;
@@ -328,6 +450,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
         } else {
             Menu.log("Failed to close " + port.getDescriptivePortName());
         }
+        SwingUtilities.invokeLater(this::clearRightPanel);
         return res;
     }
 
@@ -356,8 +479,8 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                             timeoutFlags.replaceAll((s, v) -> true);
                         }
                         if ((!message.contains("{"))) {
-                            if(message.length()>DevConfig.maxBetweenMessageLength){
-                                log('"'+message+'"');
+                            if (message.length() > DevConfig.maxBetweenMessageLength) {
+                                log('"' + message + '"');
                                 break;
                             }
                             leftover = message;
@@ -373,8 +496,10 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                             Handler.getScheduler().schedule(() -> {
                                 synchronized (timeoutFlags) {
                                     if (!timeoutFlags.get(finalUniqueIndex)) {
-                                        log('"'+leftover+'"');
-                                        leftover = "";
+                                        if (!leftover.isEmpty()) {
+                                            log('"' + leftover + '"');
+                                            leftover = "";
+                                        }
                                     }
                                     timeoutFlags.remove(finalUniqueIndex);
                                 }
@@ -409,11 +534,12 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                             Plot plot = plots.get(plotName);
                             //region create plot if absent
                             if (plot == null) {
-                                synchronized (newPlots) {
+                                synchronized (newPlots) { //TODO: pretty sure this synch is unnecessary
                                     plot = newPlots.get(plotName);
                                     if (plot == null) {
                                         plot = createNewPlot(plotName);
                                         newPlots.put(plotName, plot);
+                                        plotAdded = true;
                                     }
                                 }
                             }
@@ -421,7 +547,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                             packet = packet.substring(packet.indexOf("("));
                             if (!packet.contains(")")) {
                                 logger.info("Unclosed (: " + plotName + packet);
-                                Menu.log("Unclosed (: " + plotName + packet);
+                                log("Unclosed (: " + plotName + packet);
                                 break;
                             }
                             String plotData = packet.substring(1, packet.indexOf(")")); // key:value,key:value
@@ -460,8 +586,11 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                     }
                     //endregion
                     if (plotAdded) {
-                        Menu.queueUpdate();
-                        Handler.repaint();
+                        plots.putAll(newPlots);
+                        newPlots.clear();
+                    }
+                    for (Plot p : plots.values()) {
+                        p.repaint();
                     }
                     break;
                 // endregion
@@ -482,10 +611,13 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
 
     @NotNull
     private Plot createNewPlot(String plotName) {
+        logger.info("Creating new plot");
         JLabel plotTitle = new JLabel(plotName);
         JTextField range = new JTextField(String.valueOf(DevConfig.defaultRange));
         JPanel legend = new JPanel();
-        Plot plot = new Plot(plotTitle, plotName, legend);
+        JScrollPane legendScroll = new JScrollPane(legend);
+        legend.setLayout(new GridLayout(0, 1));
+        Plot plot = new Plot(plotTitle, plotName, legend, legendScroll);
         range.addActionListener(e -> {
             try {
                 int value = Integer.parseInt(e.getActionCommand());
@@ -498,13 +630,53 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
             }
         });
         JPanel plotPanel = new JPanel(); //TODO: layout of everything and update legend inside Plot
+        SpringLayout plotLayout = new SpringLayout();
+        plotPanel.setLayout(plotLayout);
+        plotPanel.add(plotTitle);
+        plotPanel.add(range);
+        plotPanel.add(legendScroll);
+        plotPanel.add(plot);
+        plotLayout.putConstraint(TOP, plotTitle, 0, TOP, plotPanel);
+        plotLayout.putConstraint(TOP, range, 0, TOP, plotPanel);
+        plotLayout.putConstraint(TOP, legendScroll, 0, TOP, plotPanel);
+        plotLayout.putConstraint(LEFT, plotTitle, 0, LEFT, plotPanel);
+        plotLayout.putConstraint(RIGHT, plotTitle, 0, LEFT, range);
+        plotLayout.putConstraint(RIGHT, range, 0, LEFT, legendScroll);
+        plotLayout.putConstraint(RIGHT, legendScroll, 0, RIGHT, plotPanel);
+        plotLayout.putConstraint(BOTTOM, plotTitle, 0, BOTTOM, range);
+        plotLayout.putConstraint(TOP, plot, 0, BOTTOM, plotTitle);
+        plotLayout.putConstraint(RIGHT, plot, 0, RIGHT, plotPanel);
+        plotLayout.putConstraint(LEFT, plot, 0, LEFT, plotPanel);
+        plotLayout.putConstraint(BOTTOM, plot, 0, BOTTOM, plotPanel);
+        SwingUtilities.invokeLater(() -> {
+            plotGroup.add(plotPanel);
+            rearrangePlotGroup();
+        });
         return plot;
+    }
+
+    private void rearrangePlotGroup() {
+        int xn = 1;
+        int yn = 1;
+        int width = plotGroup.getWidth();
+        int height = plotGroup.getHeight();
+        while (xn * yn < plots.size() + newPlots.size()) {
+            double xratio = ((double) width / (xn + 1)) / ((double) height / yn);
+            double yratio = ((double) width / xn) / ((double) height / (yn + 1));
+            if (Math.abs(Math.log(xratio / DevConfig.optimalRatio)) < Math.abs(Math.log(yratio / DevConfig.optimalRatio))) {
+                xn++;
+            } else {
+                yn++;
+            }
+        }
+        GridLayout plotGroupLayout = new GridLayout(yn, xn);
+        plotGroup.setLayout(plotGroupLayout);
+        plotGroup.revalidate();
     }
 
     private void clearRightPanel() {
         portTitle.setText("");
         plotGroup.removeAll();
-        baudrate.setText(String.valueOf(DEFAULT_BAUDRATE));
         rightPanel.setVisible(false);
     }
 
@@ -522,7 +694,6 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
     public int getListeningEvents() {
         return SerialPort.LISTENING_EVENT_DATA_AVAILABLE |
                 SerialPort.LISTENING_EVENT_BREAK_INTERRUPT |
-                SerialPort.LISTENING_EVENT_PORT_DISCONNECTED |
-                SerialPort.LISTENING_EVENT_DATA_WRITTEN;
+                SerialPort.LISTENING_EVENT_PORT_DISCONNECTED;
     }
 }
