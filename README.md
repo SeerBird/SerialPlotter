@@ -4,7 +4,7 @@ A cross-platform app for plotting data from and sending commands to a serial por
 ## Installation
 Check out the <a href="https://seerbird.github.io/SerialPlotter/download.html">download page</a>.
 ## Usage
-After installing and opening the app, you should be able to see a list of available ports in the top left.
+To choose a COM port to connect to, use the "Connect" context menu in the top left.
 After choosing the port you will be able to see plots of the data that arrives to the port on the right side of the UI.
 You will also be able to send text to the port using the textbox in the bottom left.
 UTF-8 is used to decode and encode text, and to plot data you send to the serial port you need to use the following packet structure:
