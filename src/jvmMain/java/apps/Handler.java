@@ -1,10 +1,9 @@
 package apps;
 
-import apps.extrasFlatLaF.FlatInspector;
-import apps.extrasFlatLaF.FlatUIDefaultsInspector;
+import apps.util.FlatInspector;
+import apps.util.FlatUIDefaultsInspector;
 import apps.input.InputInfo;
 import apps.output.AppWindow;
-import apps.output.Renderer;
 import apps.output.audio.Audio;
 import apps.ui.Menu;
 import apps.util.GFormatter;
