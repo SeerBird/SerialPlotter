@@ -77,7 +77,7 @@ public class Handler {
         if( SystemInfo.isMacOS ) {
             // enable screen menu bar
             // (moves menu bar from JFrame window to top of screen)
-            System.setProperty( "apple.laf.useScreenMenuBar", "true" );
+            //System.setProperty( "apple.laf.useScreenMenuBar", "true" );
 
             // application name used in screen menu bar
             // (in first menu after the "apple" menu)
