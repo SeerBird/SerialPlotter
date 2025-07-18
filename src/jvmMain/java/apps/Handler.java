@@ -1,7 +1,7 @@
 package apps;
 
-import apps.util.FlatInspector;
-import apps.util.FlatUIDefaultsInspector;
+//import apps.util.FlatInspector;
+//import apps.util.FlatUIDefaultsInspector;
 import apps.input.InputInfo;
 import apps.output.AppWindow;
 import apps.output.audio.Audio;
@@ -99,8 +99,8 @@ public class Handler {
         }
         FlatDarculaLaf.setup();
         // smth ab screenshot mode, check FlatLaf/flatlaf-demo/src/main/java/com/formdev/flatlaf/demo
-        FlatInspector.install( "ctrl shift alt X" );
-        FlatUIDefaultsInspector.install( "ctrl shift alt Y" );
+        //FlatInspector.install( "ctrl shift alt X" );
+        //FlatUIDefaultsInspector.install( "ctrl shift alt Y" );
         // /FlatLafDemo.java if needed
         AppWindow frame = new AppWindow();
         frame.pack();
