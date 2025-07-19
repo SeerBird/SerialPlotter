@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.logging.Logger;
 
 public class Plot extends Canvas {
@@ -19,6 +18,7 @@ public class Plot extends Canvas {
     final HashMap<String, ArrayList<Float>> newDataSets = new HashMap<>();
     final HashMap<String, JToggleButton> dataSetToggles = new HashMap<>();
     int rangeN = DevConfig.defaultRange;
+    boolean painting = false;
     JLabel titleLabel;
     String plotName;
     JPanel legend;
@@ -85,11 +85,18 @@ public class Plot extends Canvas {
 
     @Override
     public void paint(@NotNull Graphics g) {
+        if (painting) {
+            repaint();
+            return;
+        }
+        painting = true;
         if (getBufferStrategy() == null) {
             createBufferStrategy(2);
         }
         g = getBufferStrategy().getDrawGraphics();
-        g.clearRect(0, 0, getWidth(), getHeight());
+        g.setColor(getBackground());
+        g.fillRect(0, 0, getWidth(), getHeight());
+        //g.clearRect(0, 0, getWidth(), getHeight());
         dataSets.putAll(newDataSets);
         newDataSets.clear();
         int width = getWidth();
@@ -101,7 +108,7 @@ public class Plot extends Canvas {
         float min = Float.MAX_VALUE;
         boolean atLeastOneValue = false;
         for (String dataSetName : new ArrayList<>(dataSets.keySet())) {
-            if(!dataSetToggles.get(dataSetName).isSelected()){
+            if (!dataSetToggles.get(dataSetName).isSelected()) {
                 continue;
             }
             ArrayList<Float> dataSet = dataSets.get(dataSetName);
@@ -208,6 +215,7 @@ public class Plot extends Canvas {
         //endregion
         g.dispose();
         getBufferStrategy().show();
+        painting = false;
     }
 
     private static float nDecPlaces(float number, int n) {
