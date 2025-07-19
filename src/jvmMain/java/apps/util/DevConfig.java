@@ -51,4 +51,5 @@ public class DevConfig {
     public static long portListRefreshPeriod = 100; // millis
     public static long messageReceivePeriod = 15; // millis
     public static int scrollSize =80;
+    public static final boolean defaultLoggingPackets = false;
 }

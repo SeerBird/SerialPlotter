@@ -105,11 +105,11 @@ public class PortTester {
             logger.info("Tester sending shit: "+length+" bytes");
         }, 8, 10, TimeUnit.MILLISECONDS);
         Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-            byte[] buf = ("YoMama\n").getBytes(StandardCharsets.UTF_8);
+            byte[] buf = ("This is a test message outside of a packet").getBytes(StandardCharsets.UTF_8);
             //byte[] buf = ("sin1:"+ sin1+";").getBytes(StandardCharsets.UTF_8);
             int length = port.writeBytes(buf, buf.length);
             logger.info("Tester sending shit: "+length+" bytes");
-        }, 8, 990, TimeUnit.MILLISECONDS);
+        }, 8, 15, TimeUnit.SECONDS);
         /*
         scheduler.scheduleAtFixedRate(() -> {
             byte[] buf = ("A 8 0 1 3 BABABOI live and prosper").getBytes(StandardCharsets.UTF_8);
