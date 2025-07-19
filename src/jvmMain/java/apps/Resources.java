@@ -20,6 +20,7 @@ public class Resources {
     public static ArrayList<File> amogus;
     public static ArrayList<FlatSVGIcon> enabledIcons;
     public static ArrayList<FlatSVGIcon> disabledIcons;
+    public static FlatSVGIcon crossIcon;
 
     static {
         goodnight = Resources.class.getResource("goodnight.wav");
@@ -28,6 +29,7 @@ public class Resources {
         pipe = Resources.class.getResource("pipe.wav");
         textBoxFail = Resources.class.getResource("textBoxFail.wav");
         stoppls = Resources.class.getResource("stoppls.wav");
+        crossIcon = new FlatSVGIcon(Resources.class.getResource("icons/close.svg"));
         enabledIcons = new ArrayList<>();
         disabledIcons = new ArrayList<>();
         for(int i=1;i<5;i++){

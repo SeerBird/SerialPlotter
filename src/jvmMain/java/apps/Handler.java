@@ -5,7 +5,6 @@ package apps;
 import apps.input.InputInfo;
 import apps.output.AppWindow;
 import apps.output.audio.Audio;
-import apps.ui.Menu;
 import apps.util.GFormatter;
 import com.fazecast.jSerialComm.*;
 import com.formdev.flatlaf.FlatDarculaLaf;
@@ -140,17 +139,6 @@ public class Handler {
         }
     }
 
-    //region State traversal
-    private static void setState(ProgramState state) {
-        Handler.state = state;
-        Menu.refreshMenuState();
-    }
-
-    public static void escape() {
-
-    }
-
-    //endregion
     //region Getters
     public static InputInfo getInput() {
         return input;

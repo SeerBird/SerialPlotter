@@ -4,6 +4,7 @@ public class LogEntry {
     public enum Type{
         Info,
         Packet,
+        OutMessage,
         Warning,
         ErrorMessage
     }

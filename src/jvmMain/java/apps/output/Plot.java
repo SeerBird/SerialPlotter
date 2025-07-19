@@ -63,7 +63,7 @@ public class Plot extends Canvas {
                             maxwidth = but.getPreferredSize().getWidth() + 16;
                         }//TODO: leave these hard-coded numbers be and enjoy life
                     }
-                    totheight = Math.min(26 * 2 + 6, totheight + 6);
+                    totheight = Math.min(26 * DevConfig.legendEntryNum + 6, totheight + 6);
                     legendScroll.setPreferredSize(new Dimension((int) maxwidth, (int) totheight));
                     //legend.setPreferredSize(new Dimension((int) maxwidth,legend.getHeight()));
                     legendScroll.getParent().revalidate();
@@ -100,7 +100,11 @@ public class Plot extends Canvas {
         float max = -Float.MAX_VALUE;
         float min = Float.MAX_VALUE;
         boolean atLeastOneValue = false;
-        for (ArrayList<Float> dataSet : new ArrayList<>(dataSets.values())) {
+        for (String dataSetName : new ArrayList<>(dataSets.keySet())) {
+            if(!dataSetToggles.get(dataSetName).isSelected()){
+                continue;
+            }
+            ArrayList<Float> dataSet = dataSets.get(dataSetName);
             for (Float value : new ArrayList<>(dataSet)) {
                 if (value == null) {
                     continue; //VERY BAD FIX. CHECK WHERE THE NULL COMES FROM!
@@ -201,21 +205,6 @@ public class Plot extends Canvas {
                         plotYFromValue(min, max, dataSet.get(n + 1)));
             }
         }
-        //endregion
-        //region legend. is this really enough?
-        /*
-        int topy = plot.y + DevConfig.fontSize;
-        int x = plot.x + plot.title.width + plot.range.width + DevConfig.labelHorMargin;
-        int legendWidth = plot.width - plot.title.width - plot.range.width;
-        for (int i = 0; i < DevConfig.plotColors.size() && i < dataSetNames.size(); i++) {
-            g.setColor(DevConfig.plotColors.get(i));
-            g.drawString(truncateStringEnd(dataSetNames.get(i), legendWidth), x, topy);
-            topy += DevConfig.fontSize;
-            if (topy > plot.y + plot.height) {
-                break;
-            }
-        }
-         */
         //endregion
         g.dispose();
         getBufferStrategy().show();

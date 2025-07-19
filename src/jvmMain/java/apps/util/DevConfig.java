@@ -52,4 +52,6 @@ public class DevConfig {
     public static long messageReceivePeriod = 15; // millis
     public static int scrollSize =80;
     public static final boolean defaultLoggingPackets = false;
+    public static final int legendEntryNum = 3;
+    public static final Color infoColor = new Color(42, 175, 31);
 }
