@@ -47,7 +47,7 @@ public class DevConfig {
     public static int maxBetweenMessageLength = 1000;
 
     //endregion
-    public static long outOfPacketMessageTimeout = 1000;
+    public static long outOfPacketMessageTimeout = 100;
     public static long portListRefreshPeriod = 100; // millis
     public static long messageReceivePeriod = 15; // millis
     public static int scrollSize =80;

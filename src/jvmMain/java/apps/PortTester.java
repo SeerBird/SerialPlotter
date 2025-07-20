@@ -109,7 +109,7 @@ public class PortTester {
             //byte[] buf = ("sin1:"+ sin1+";").getBytes(StandardCharsets.UTF_8);
             int length = port.writeBytes(buf, buf.length);
             logger.info("Tester sending shit: "+length+" bytes");
-        }, 8, 15, TimeUnit.SECONDS);
+        }, 8, 1, TimeUnit.SECONDS);
         /*
         scheduler.scheduleAtFixedRate(() -> {
             byte[] buf = ("A 8 0 1 3 BABABOI live and prosper").getBytes(StandardCharsets.UTF_8);
