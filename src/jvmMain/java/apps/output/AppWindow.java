@@ -794,6 +794,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
 
         });
         JPanel plotPanel = new JPanel();
+        plotPanel.setBorder(BorderFactory.createLineBorder(DevConfig.borders));
         removeButton.addActionListener(e -> {
             synchronized (plots) {
                 plots.remove(plot.plotName);
