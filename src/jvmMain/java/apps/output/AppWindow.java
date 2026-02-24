@@ -3,6 +3,7 @@ package apps.output;
 
 import apps.Handler;
 import apps.Resources;
+import apps.output.animations.Amogus;
 import apps.output.audio.Audio;
 import apps.output.audio.Sound;
 import apps.util.DevConfig;
@@ -15,6 +16,7 @@ import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -26,7 +28,7 @@ import static apps.output.LogEntry.Type.*;
 
 public class AppWindow extends JFrame implements SerialPortMessageListener {
     private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
+    public static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(8);
 
     //region rename direction afterwards but I need this or my brain will break
     private static final String RIGHT = SpringLayout.EAST;
@@ -61,6 +63,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
     long lastReceivedTime;
     final HashMap<Integer, Boolean> timeoutFlags = new HashMap<>();
     final HashMap<String, Plot> plots = new HashMap<>();
+    final ArrayList<Amogus> amogi = new ArrayList<>();
     final HashMap<String, Plot> newPlots = new HashMap<>();
     final AppWindow window = this; //TODO: this is ugly plsssss
     final MouseListener refocuser = new MouseListener() {
@@ -107,14 +110,6 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
             logger.info(e.getMessage());
             throw new RuntimeException(e);
         }
-        //endregion
-        //region hook up apps.input
-        //InputControl input = new InputControl();
-        //addKeyListener(input);
-        //addMouseListener(input);
-        //addMouseMotionListener(input);
-        //addMouseWheelListener(input);
-        //addWindowListener(input);
         //endregion
         this.addMouseListener(refocuser);
         initComponents();
@@ -175,10 +170,13 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                     log("No port connected!", Warning);
                     return;
                 }
+                if(Handler.getBullshitOn()){
+                    Audio.playSound(Sound.collision);
+                }
                 SerialPort port = connected;
                 connected = null;
                 plots.clear();
-                Thread closePort = new Thread(()-> closePortShort(port));
+                Thread closePort = new Thread(() -> closePortShort(port));
                 clearRightPanel();
                 closePort.start();
             });
@@ -207,6 +205,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
         {
             commandLine = new JTextField();
             log = new JTextPane() {
+
                 public boolean getScrollableTracksViewportWidth() {
                     return getSize().width < getParent().getSize().width;
                 }
@@ -270,7 +269,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                 StyleConstants.setForeground(messageStyles.get(ErrorMessage), Color.red);
                 StyleConstants.setForeground(messageStyles.get(OutMessage), Color.white);
                 //endregion
-                scheduler.scheduleAtFixedRate(this::refreshLog, 8, 16, TimeUnit.MILLISECONDS);
+                scheduler.scheduleAtFixedRate(this::refreshLog, 5, 200, TimeUnit.MILLISECONDS);
                 logScroll.getVerticalScrollBar().setUnitIncrement(16);
                 new SmartScroller(logScroll);
                 logScroll.setMinimumSize(null);
@@ -393,18 +392,25 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
             }
         }
         if (loggingPackets == lastLoggingPackets) {
+            if (newMessages.isEmpty()) {
+                return;
+            }
+            StyledDocument doc = log.getStyledDocument();
             SwingUtilities.invokeLater(() -> {
-                StyledDocument doc = log.getStyledDocument();
-                for (LogEntry message : newMessages) {
-                    if ((!loggingPackets) && (message.type == Packet)) {
-                        continue;
+                LogEntry nextEntry = newMessages.get(0);
+                LogEntry currentBatch = new LogEntry(nextEntry.string, nextEntry.type);
+                int i = 1;
+                while (i <= newMessages.size() - 1) {
+                    nextEntry = newMessages.get(i);
+                    if (nextEntry.type == currentBatch.type) {
+                        currentBatch.string += nextEntry.string;
+                    } else {
+                        insertString(doc,currentBatch,loggingPackets);
+                        currentBatch = new LogEntry(nextEntry.string, nextEntry.type);
                     }
-                    try {
-                        doc.insertString(doc.getLength(), message.string, messageStyles.get(message.type));
-                    } catch (BadLocationException e) {
-                        throw new RuntimeException(e); // ?
-                    }
+                    i++;
                 }
+                insertString(doc,currentBatch,loggingPackets);
             });
         } else {
             ArrayList<LogEntry> messages;
@@ -419,23 +425,29 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                     throw new RuntimeException(e);
                 }
                 for (LogEntry message : messages) {
-                    if ((!loggingPackets) && (message.type == Packet)) {
-                        continue;
-                    }
-                    try {
-                        doc.insertString(doc.getLength(), message.string, messageStyles.get(message.type));
-                    } catch (BadLocationException e) {
-                        throw new RuntimeException(e); // ?
-                    }
+                    insertString(doc,message,loggingPackets);
                 }
             });
         }
         lastLoggingPackets = loggingPackets;
     }
+    private void insertString(StyledDocument doc, LogEntry message, boolean loggingPackets){
+        if(!loggingPackets&&message.type == Packet){
+            return;
+        }
+        try {
+            doc.insertString(doc.getLength(), message.string, messageStyles.get(message.type));
+        } catch (BadLocationException e) {
+            throw new RuntimeException(e); // ?
+        }
+    }
 
     private void sendCommand(@NotNull String command) {
         if (command.isEmpty()) {
             return;
+        }
+        if (command.equals("silly")||command.equals("67")){
+            Handler.setSounds(!Handler.getBullshitOn());
         }
         //region add command to commandLog
         commandLog.add(command);
@@ -585,10 +597,10 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
     }
 
     private void closePortShort(SerialPort port) {
-        if(port==null){
+        if (port == null) {
             return;
         }
-        synchronized (plots){
+        synchronized (plots) {
             plots.clear();
         }
         try {
@@ -604,9 +616,9 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                 return res;
             }, 1000);
         } catch (ExecutionException e) {
-            log("Exception closing " + connected.getDescriptivePortName(), ErrorMessage);
+            log("Exception closing " + port.getDescriptivePortName(), ErrorMessage);
         } catch (TimeoutException e) {
-            log("Timed out closing " + connected.getDescriptivePortName(), ErrorMessage);
+            log("Timed out closing " + port.getDescriptivePortName(), ErrorMessage);
         }
     }
 
@@ -849,6 +861,20 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
             }
         }
         GridLayout plotGroupLayout = new GridLayout(yn, xn);
+        if (amogi.size() != xn * yn - plots.size()) {
+            for (Amogus amogus : amogi) {
+                amogus.stop();
+                plotGroup.remove(amogus);
+            }
+            amogi.clear();
+            if (!plots.isEmpty()) {
+                for (int i = 0; i < xn * yn - plots.size(); i++) {
+                    Amogus amogus = new Amogus();
+                    amogi.add(amogus);
+                    plotGroup.add(amogus);
+                }
+            }
+        }
         plotGroup.setLayout(plotGroupLayout);
         plotGroup.revalidate();
     }
@@ -875,6 +901,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                 SerialPort.LISTENING_EVENT_BREAK_INTERRUPT |
                 SerialPort.LISTENING_EVENT_PORT_DISCONNECTED;
     }
+
     public static <V> V timeout(Callable<V> getter, int timeout) throws TimeoutException, ExecutionException {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final Future<V> handler = executor.submit(getter);

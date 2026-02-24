@@ -9,7 +9,7 @@ plugins {
 
 group = "seerbird.apps"
 
-version = "1.2.5"
+version = "1.3.1"
 
 repositories {
     mavenCentral()

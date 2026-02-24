@@ -24,7 +24,7 @@ public class DevConfig {
     public static int vertMargin = 16;
 
     //endregion
-    public static int fontSize = 16;
+    public static int fontSize = 18;
     public static int maxTextboxLength = 3000; //TODO: do all these max limits for completeness' sake
     public static int maxCommandLogSize = 3000;
     public static int maxLogEntryLength = 3000;

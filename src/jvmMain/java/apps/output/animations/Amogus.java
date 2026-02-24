@@ -5,53 +5,81 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import apps.Handler;
 import apps.Resources;
+import apps.output.AppWindow;
 
 import javax.imageio.ImageIO;
 
-public class Amogus implements Animation {
+public class Amogus extends Canvas {
     private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    static BufferedImage frame;
     static ArrayList<BufferedImage> frames;
-    int x;
-    int y;
-    int width;
-    int height;
+    static BufferedImage gif_consumer;
     int index;
-    static{
+    boolean painting = false;
+    ScheduledFuture<?> animationFuture;
+
+    public Amogus() {
+        animationFuture = AppWindow.scheduler.scheduleAtFixedRate(this::repaint,
+                0, 40, TimeUnit.MILLISECONDS);
+    }
+
+    static {
         frames = new ArrayList<>();
-        for(File file:Resources.amogus){
+        for (File file : Resources.amogus) {
             try {
                 frames.add(ImageIO.read(file));
             } catch (IOException e) {
                 logger.info("Whatever.");
             }
         }
-    }
-
-    public Amogus(int x, int y, int width, int height) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-    }
-
-    @Override
-    public void draw(Graphics g) {
-        boolean res = g.drawImage(frames.get(index).getScaledInstance(width,height,Image.SCALE_FAST), x, y, null);
-        if(res){
-            //huh
+        try {
+            gif_consumer = ImageIO.read(Resources.gif_consumer);
+        } catch (IOException e) {
+            logger.info("Whatever.");
         }
     }
 
-    public void next() {
-        index=(index+1)%Resources.amogus.size();
+    @Override
+    public void update(Graphics g) {
+        paint(g);
+    }
+
+    public void stop() {
+        animationFuture.cancel(true);
     }
 
     @Override
-    public Rectangle rect() {
-        return new Rectangle(x, y, width, height);
+    public void paint(Graphics g) {
+        if (!Handler.getBullshitOn()) {
+            return;
+        }
+        if (painting) {
+            repaint();
+            return;
+        }
+        try {
+            painting = true;
+            if (getBufferStrategy() == null) {
+                createBufferStrategy(2);
+            }
+            g = getBufferStrategy().getDrawGraphics();
+            if (Math.random() < 3e-3) {
+                g.drawImage(gif_consumer.getScaledInstance(getWidth(), getHeight(), Image.SCALE_FAST),
+                        0, 0, null);
+            } else {
+                g.drawImage(frames.get(index).getScaledInstance(getWidth(), getHeight(), Image.SCALE_FAST),
+                        0, 0, null);
+                index = (index + 1) % Resources.amogus.size();
+            }
+            g.dispose();
+            getBufferStrategy().show();
+        } finally {
+            painting = false;
+        }
     }
 }

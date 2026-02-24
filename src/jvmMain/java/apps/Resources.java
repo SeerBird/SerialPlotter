@@ -18,6 +18,7 @@ public class Resources {
     public static URL stoppls;
     public static File comfortaa;
     public static ArrayList<File> amogus;
+    public static File gif_consumer;
     public static ArrayList<FlatSVGIcon> enabledIcons;
     public static ArrayList<FlatSVGIcon> disabledIcons;
     public static FlatSVGIcon crossIcon;
@@ -28,7 +29,7 @@ public class Resources {
         pew = Resources.class.getResource("pew.wav");
         pipe = Resources.class.getResource("pipe.wav");
         textBoxFail = Resources.class.getResource("textBoxFail.wav");
-        stoppls = Resources.class.getResource("stoppls.wav");
+        stoppls = Resources.class.getResource("wrong-answer-buzzer.wav");
         crossIcon = new FlatSVGIcon(Resources.class.getResource("icons/close.svg"));
         enabledIcons = new ArrayList<>();
         disabledIcons = new ArrayList<>();
@@ -36,6 +37,7 @@ public class Resources {
             enabledIcons.add(new FlatSVGIcon(Resources.class.getResource("icons/enabled"+ i + ".svg")).derive(0.25F));
             disabledIcons.add(new FlatSVGIcon(Resources.class.getResource("icons/disabled"+ i+ ".svg")).derive(0.25F));
         }
+        gif_consumer = getFile("gif_consumer.jpg");
         amogus = new ArrayList<>();
         try {
             comfortaa = getFile("Comfortaa.ttf");
