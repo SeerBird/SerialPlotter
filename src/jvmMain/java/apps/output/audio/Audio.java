@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.sound.sampled.*;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -18,10 +19,11 @@ import static apps.output.audio.Sound.*;
 public class Audio {
     private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     static final Map<Sound, URL> soundStreams = new HashMap<>();
+    static final ArrayList<Clip> toCancel = new ArrayList<>();
     static Clip silent;
     static final Map<Sound, Clip> cooldownSounds = new HashMap<>();
 
-    public static void start(){
+    public static void start() {
         try {
             silent = AudioSystem.getClip();
         } catch (LineUnavailableException e) {
@@ -32,21 +34,23 @@ public class Audio {
         soundStreams.put(disconnect, Resources.affirmation);
         soundStreams.put(stopPls, Resources.baddddd);
         //region load in for it to work without lag later
-        new Thread(()->{for(URL soundFile:soundStreams.values()){
-            try {
-                Clip clip = AudioSystem.getClip();
-                clip.open(AudioSystem.getAudioInputStream(soundFile));
-                clip.close();
-            } catch (LineUnavailableException | UnsupportedAudioFileException ignored) {
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        new Thread(() -> {
+            for (URL soundFile : soundStreams.values()) {
+                try {
+                    Clip clip = AudioSystem.getClip();
+                    clip.open(AudioSystem.getAudioInputStream(soundFile));
+                    clip.close();
+                } catch (LineUnavailableException | UnsupportedAudioFileException ignored) {
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
-        }}).start();
+        }).start();
         //endregion
     }
 
     public static void playSound(Sound sound) {// design some kind of notifiable object to stop the clip
-        if(!Handler.getBullshitOn()){
+        if (!Handler.getBullshitOn()) {
             return;
         }
         try {
@@ -84,10 +88,37 @@ public class Audio {
         soundPlayer.start();
     }
 
+    public static void playCancellableSound(Sound sound) {// design some kind of notifiable object to stop the clip
+        if (!Handler.getBullshitOn()) {
+            return;
+        }
+        try {
+            Clip clip = AudioSystem.getClip();
+            clip.open(AudioSystem.getAudioInputStream(soundStreams.get(sound)));
+            autoClose(clip);
+            toCancel.add(clip); //TODO: fix concurrent modification here maybe
+            clip.start();
+        } catch (LineUnavailableException | UnsupportedAudioFileException ignored) {
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void cancelSounds() {
+        for (Clip clip : toCancel) {
+            clip.stop();
+            clip.close();
+        }
+        toCancel.clear();
+    }
+
     private static void autoClose(@NotNull Clip clip) {
         clip.addLineListener(event -> {
-            if (event.getType() == LineEvent.Type.STOP)
+            if (event.getType() == LineEvent.Type.STOP) {
                 clip.close();
+                toCancel.remove(clip);
+            }
+
         });
     }
 }

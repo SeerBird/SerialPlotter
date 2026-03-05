@@ -166,6 +166,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
             //endregion
             //region disconnect
             disconnect.addActionListener(e -> {
+                Audio.cancelSounds();
                 Audio.playSound(Sound.disconnect);
                 if (connected == null) {
                     log("No port connected!", Warning);
@@ -470,7 +471,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
         });
         task.start();
         commandLine.setText("");
-        Audio.playSound(Sound.send);
+        Audio.playCancellableSound(Sound.send);
         //commandLine.enter(); // I think this is redundant? each textBox has a leaveOnSubmit property now...
     }
 
