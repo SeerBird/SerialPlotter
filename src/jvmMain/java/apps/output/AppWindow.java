@@ -16,7 +16,6 @@ import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -171,7 +170,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                     return;
                 }
                 if(Handler.getBullshitOn()){
-                    Audio.playSound(Sound.collision);
+                    Audio.playSound(Sound.disconnect);
                 }
                 SerialPort port = connected;
                 connected = null;
@@ -471,7 +470,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
         });
         task.start();
         commandLine.setText("");
-        Audio.playSound(Sound.pewPew);
+        Audio.playSound(Sound.button);
         //commandLine.enter(); // I think this is redundant? each textBox has a leaveOnSubmit property now...
     }
 

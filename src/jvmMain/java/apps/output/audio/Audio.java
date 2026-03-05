@@ -27,12 +27,9 @@ public class Audio {
         } catch (LineUnavailableException e) {
             throw new RuntimeException(e);
         }
-        soundStreams.put(textBoxFail, Resources.textBoxFail);
-        soundStreams.put(death, Resources.goodnight);
         soundStreams.put(button, Resources.vine);
-        soundStreams.put(pewPew, Resources.pew);
-        soundStreams.put(collision, Resources.pipe);
-        soundStreams.put(stopPls, Resources.stoppls);
+        soundStreams.put(disconnect, Resources.goodnight);
+        soundStreams.put(stopPls, Resources.baddddd);
         //region load in for it to work without lag later
         new Thread(()->{for(URL soundFile:soundStreams.values()){
             try {

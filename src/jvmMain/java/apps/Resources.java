@@ -15,6 +15,7 @@ public class Resources {
     public static URL pew;
     public static URL pipe;
     public static URL textBoxFail;
+    public static URL baddddd;
     public static URL stoppls;
     public static File comfortaa;
     public static ArrayList<File> amogus;
@@ -31,6 +32,7 @@ public class Resources {
         textBoxFail = Resources.class.getResource("textBoxFail.wav");
         stoppls = Resources.class.getResource("wrong-answer-buzzer.wav");
         crossIcon = new FlatSVGIcon(Resources.class.getResource("icons/close.svg"));
+        baddddd = Resources.class.getResource("bad-to-the-bone.wav");
         enabledIcons = new ArrayList<>();
         disabledIcons = new ArrayList<>();
         for(int i=1;i<5;i++){
