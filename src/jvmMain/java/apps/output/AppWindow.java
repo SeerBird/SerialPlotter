@@ -156,6 +156,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                             @Override
                             public void actionPerformed(ActionEvent e) {
                                 connectToPort(port);
+                                Audio.playSound(Sound.button);
                             }
                         });
                         portConnect.add(portButton);
@@ -165,12 +166,10 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
             //endregion
             //region disconnect
             disconnect.addActionListener(e -> {
+                Audio.playSound(Sound.disconnect);
                 if (connected == null) {
                     log("No port connected!", Warning);
                     return;
-                }
-                if(Handler.getBullshitOn()){
-                    Audio.playSound(Sound.disconnect);
                 }
                 SerialPort port = connected;
                 connected = null;
@@ -185,6 +184,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                 synchronized (logEntries) {
                     logEntries.clear();
                 }
+                Audio.playSound(Sound.button);
                 SwingUtilities.invokeLater(() -> {
                     StyledDocument doc = log.getStyledDocument();
                     try {
@@ -470,7 +470,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
         });
         task.start();
         commandLine.setText("");
-        Audio.playSound(Sound.button);
+        Audio.playSound(Sound.send);
         //commandLine.enter(); // I think this is redundant? each textBox has a leaveOnSubmit property now...
     }
 
@@ -815,6 +815,7 @@ public class AppWindow extends JFrame implements SerialPortMessageListener {
                 plotGroup.remove(plotPanel);
                 rearrangePlotGroup();
             });
+            Audio.playSound(Sound.button);
         });
         SpringLayout plotLayout = new SpringLayout();
         plotPanel.setLayout(plotLayout);

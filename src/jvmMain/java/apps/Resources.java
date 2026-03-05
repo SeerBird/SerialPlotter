@@ -12,10 +12,12 @@ public class Resources {
     private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     public static final URL goodnight;
     public static URL vine;
+    public static URL jam;
     public static URL pew;
     public static URL pipe;
     public static URL textBoxFail;
     public static URL baddddd;
+    public static URL affirmation;
     public static URL stoppls;
     public static File comfortaa;
     public static ArrayList<File> amogus;
@@ -26,7 +28,9 @@ public class Resources {
 
     static {
         goodnight = Resources.class.getResource("goodnight.wav");
+        affirmation = Resources.class.getResource("affirmation.wav");
         vine = Resources.class.getResource("vine.wav");
+        jam = Resources.class.getResource("Super 3D Space Jam World 64.wav");
         pew = Resources.class.getResource("pew.wav");
         pipe = Resources.class.getResource("pipe.wav");
         textBoxFail = Resources.class.getResource("textBoxFail.wav");

@@ -28,7 +28,8 @@ public class Audio {
             throw new RuntimeException(e);
         }
         soundStreams.put(button, Resources.vine);
-        soundStreams.put(disconnect, Resources.goodnight);
+        soundStreams.put(send, Resources.jam);
+        soundStreams.put(disconnect, Resources.affirmation);
         soundStreams.put(stopPls, Resources.baddddd);
         //region load in for it to work without lag later
         new Thread(()->{for(URL soundFile:soundStreams.values()){
