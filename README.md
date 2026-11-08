@@ -17,6 +17,24 @@ SerialPlotter will attempt to parse all values as floats, and all packets will b
 
 Text received between packets will be logged as well, in quotation marks. Hopefully, any problems with the ports/packets will go to the log.
 
+For example, an Arduino sketch that plots two readings:
+```cpp
+void setup() {
+  Serial.begin(9600);  // set the same baudrate in SerialPlotter
+}
+
+void loop() {
+  float T = analogRead(A0) * 0.1;           // your measurements here
+  float V = analogRead(A1) * 5.0 / 1023.0;
+  Serial.print("{temperature(T:");
+  Serial.print(T);
+  Serial.print(")voltage(V:");
+  Serial.print(V);
+  Serial.print(")}");  // print, not println: a newline between packets would be logged as text
+  delay(50);
+}
+```
+
 The textbox that appears in the top right when you connect to a port allows you to choose the baudrate of the port.
 The textbox attached to each plot allows you to choose how many of the last values will be plotted per key.
 
